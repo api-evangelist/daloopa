@@ -1,0 +1,87 @@
+generated: '2026-08-11'
+method: searched
+source: https://docs.daloopa.com/docs/rate-limits
+docs: https://docs.daloopa.com/docs/rate-limits
+provider: Daloopa
+providerId: daloopa
+description: >-
+  Daloopa publishes a single account-wide request ceiling for the REST API v3, with a documented
+  throttling contract and an explicit client checklist. The limit is a flat rate — it is not tiered
+  by plan in the public documentation.
+
+limit_count: 1
+
+limits:
+- name: Request rate
+  scope: account
+  metric: requests_per_minute
+  limit: 120
+  timeFrame: minute
+  burst: null
+  note: >-
+    "120 requests per minute", counted across the account. Docs recommend pacing at roughly two requests
+    per second to stay comfortably under the ceiling rather than bursting.
+
+responseCodes:
+  throttled: 429
+  throttled_name: Too Many Requests
+  note: >-
+    429 is declared on 36 of the 41 operations in the OpenAPI. Docs instruct clients to treat 429 as an
+    expected, recoverable condition rather than a fatal error.
+
+headers:
+  documented: false
+  request_id: null
+  ratelimit_headers: null
+  retry_after:
+    documented: false
+    note: >-
+      GAP. The docs say to "respect any retry guidance — if the API indicates how long to wait before
+      retrying, honor that value rather than guessing", but they never name the header that carries it,
+      and no rate-limit or Retry-After header is declared anywhere in the OpenAPI. An agent therefore has
+      the number from the documentation but NO runtime signal: it cannot read remaining budget, reset
+      time, or a server-supplied backoff from the response. Retry timing has to be guessed client-side.
+
+throttling_guidance:
+  strategy: exponential backoff with jitter
+  documented_backoff_example: [1s, 2s, 4s, 8s]
+  jitter: recommended
+  retry_cap: recommended (bounded attempts, then surface to job error handling)
+  source: https://docs.daloopa.com/docs/rate-limits
+
+mitigations:
+- name: Batch requests
+  note: >-
+    Endpoints that accept multiple identifiers should be called once with many, not many times with one.
+    Docs state a single batched call returning 50 results counts as ONE request; 50 individual calls
+    consume nearly half the per-minute allowance.
+  related_operations:
+  - get_fundamentals_series      # up to 100 fundamental IDs per call
+  - check_company_status
+  - bulk_add_data_warehouse_company_subscription
+  - opensearch_lightweight_search_v3
+- name: Cache aggressively
+  note: Company and series structure is stable and should be cached rather than re-fetched.
+  docs: https://docs.daloopa.com/docs/caching-strategy
+- name: Coordinate concurrency
+  note: The limit is shared account-wide, so parallel workers must coordinate against one budget.
+
+separate_quota:
+  name: Datapoint consumption
+  note: >-
+    Distinct from the request rate limit. Daloopa also meters DATAPOINTS consumed against a monthly limit,
+    readable at runtime via GET /api/v3/consumption (returns monthly_limit — the numeric limit or the
+    string 'Unlimited' — plus consumption for the window). Per-company series access is separately capped
+    and readable via GET /api/v3/consumption/series-access. This is the quota that actually gates usage
+    on a metered plan, and unlike the rate limit it IS machine-readable.
+  operations:
+  - get_datapoint_consumption
+  - list_datapoint_access_events
+  - get_series_consumption
+  - list_accessed_companies
+  docs: https://docs.daloopa.com/docs/checking-consumption
+
+cross_links:
+  conventions: conventions/daloopa-conventions.yml
+  errors: errors/daloopa-problem-types.yml
+  plans: plans/daloopa-plans-pricing.yml

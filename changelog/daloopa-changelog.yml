@@ -1,0 +1,91 @@
+generated: '2026-08-11'
+method: searched
+source: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+docs: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+description: >-
+  Daloopa does not publish a rolling dated changelog feed. There is no /changelog route on the docs host
+  (404), none on daloopa.com (404), and no releases or tags on the public GitHub org repos. What it
+  publishes instead is a per-major-version RELEASE NOTES + MIGRATION GUIDE page, and per-page `updatedAt`
+  timestamps on every documentation page. This artifact records that posture honestly and captures the
+  one release document that exists, plus the doc-page revision dates that are the only other dated change
+  signal available to a consumer.
+
+scheme: per-major-version release notes (no rolling dated changelog)
+current_version: v3
+release_feed: false
+rss: false
+probe_evidence:
+- url: https://docs.daloopa.com/changelog
+  status: 404
+- url: https://docs.daloopa.com/docs/changelog
+  status: 404
+- url: https://daloopa.com/changelog
+  status: 404
+gap: >-
+  A consumer cannot subscribe to API changes. There is no feed, no dated entry list, and no release tags.
+  Between major versions, the only way to detect that something changed is to diff the docs pages or the
+  live OpenAPI at https://app.daloopa.com/swagger.json. For a data vendor whose customers build automated
+  pipelines against it, this is the most consequential documentation gap on the profile — the v3 migration
+  guide is genuinely good, but it only fires once per major version.
+
+entries:
+- version: v3
+  date: '2026-07-29'
+  date_basis: updatedAt on the release-notes page
+  status: current
+  latest: true
+  breaking: true
+  title: Daloopa API v3 — batched breaking-change release
+  summary: >-
+    A single batched upgrade: standardized authentication, explicit calendar-vs-fiscal field names,
+    removal of long-deprecated parameters and response fields, and more scalable defaults.
+  breaking_changes:
+  - Authentication standardized — v3 accepts only Basic base64(email:api_key); legacy plaintext key rejected.
+  - GET /api/v3/export/{ticker} returns Parquet by default (was CSV).
+  - GET /api/v3/companies is now paginated (count/next/previous/results).
+  - earliest_quarter / latest_quarter renamed to earliest_calendar_quarter / latest_calendar_quarter.
+  - The ambiguous `periods` / `period` parameters removed from Fundamentals, Documents and keyword search.
+  - Deprecated duplicate response fields removed (e.g. `period` on Documents).
+  - sub_industry_id filter removed from taxonomy metric endpoints.
+  removals:
+  - GET /api/v2/taxonomy/sub-industries
+  - POST /api/v2/series-continuation
+  additions:
+  - Explicit calendar_periods / fiscal_periods and calendar_quarters / fiscal_quarters parameters throughout.
+  - Documents responses now carry BOTH calendar_quarter and fiscal_quarter.
+  migration_guide: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+
+- version: v2
+  date: null
+  status: deprecated
+  latest: false
+  summary: >-
+    Remains available and unchanged during the migration window. Accepts both the legacy plaintext and the
+    encoded authentication schemes. Sunset date not published.
+
+doc_revision_signals:
+  note: >-
+    Every docs page carries an `updatedAt` timestamp in its markdown frontmatter. These are the only other
+    dated change signals Daloopa exposes, and they are useful as a coarse "what moved recently" proxy.
+  observed:
+  - page: /docs/daloopa-api-v3-release-notes-migration-guide
+    updatedAt: '2026-07-29T12:57:07.000Z'
+  - page: /docs/webhook
+    updatedAt: '2026-07-28T22:44:47.000Z'
+  - page: /docs/mcp-prompts
+    updatedAt: '2026-06-24T20:12:04.000Z'
+  - page: /docs/daloopa-mcp
+    updatedAt: '2026-06-24T20:12:04.000Z'
+  - page: /docs/rate-limits
+    updatedAt: '2026-06-05T13:47:21.000Z'
+  - page: /docs/mcp-authentication
+    updatedAt: '2026-02-19T16:11:07.000Z'
+
+recommended_change_detection:
+  - Diff https://app.daloopa.com/swagger.json — the live OpenAPI is publicly readable and unauthenticated, so it is a reliable machine-readable change oracle even without a changelog.
+  - Poll POST /api/v3/companies/status for DATA freshness (this detects data change, not contract change).
+  - Subscribe to webhooks for data events — see asyncapi/daloopa-webhooks.yml.
+
+cross_links:
+  lifecycle: lifecycle/daloopa-lifecycle.yml
+  conventions: conventions/daloopa-conventions.yml

@@ -1,0 +1,81 @@
+generated: '2026-08-11'
+method: searched
+source: >-
+  https://docs.daloopa.com/docs/overview and the Excel Add-In, Data Sheets and Scout documentation
+description: >-
+  Client-side and embeddable surfaces Daloopa ships, distinct from SDKs. Daloopa's "components" are not
+  web components or an element library — its client-side delivery is an Office add-in and a set of hosted
+  analytical surfaces. Recorded here because for this provider's buyers (analysts in Excel) the add-in IS
+  the primary client, and the REST API is the secondary one.
+
+component_count: 4
+families:
+
+- family: Office Add-In
+  kind: office-js-addin
+  host_application: Microsoft Excel
+  distribution: Microsoft AppSource
+  components:
+  - name: Daloopa Excel Add-In
+    docs: https://docs.daloopa.com/docs/using-daloopa-excel-add-in
+    install_docs: https://docs.daloopa.com/docs/install-daloopa-excel-add-in
+    security_docs: https://docs.daloopa.com/docs/excel-add-in-security-and-architecture
+    capabilities:
+    - Connect an existing financial model to Daloopa and auto-update it as new data publishes
+    - Create rolled-up numbers from component line items
+    - Supported calendar period formats for cell-level period references
+    related_docs:
+    - {name: Connecting Your Model to Daloopa, url: 'https://docs.daloopa.com/docs/connecting-your-model'}
+    - {name: Create Rolled-Up Number, url: 'https://docs.daloopa.com/docs/daloopa-excel-add-in-create-rolled-up-number'}
+    - {name: Supported Period Formats, url: 'https://docs.daloopa.com/docs/daloopa-supported-calendar-period-formats'}
+    note: >-
+      Daloopa publishes a dedicated security-and-architecture page for the add-in describing what it can
+      and cannot access in a desktop environment, written for customer IT/infosec approval. That is a
+      materially more responsible posture than most Office add-in vendors take.
+    versioning: >-
+      Self-updating through AppSource; no pinnable version is published.
+      See packages/daloopa-packages.yml.
+
+- family: Hosted analytical surfaces
+  kind: prebuilt-dataset
+  components:
+  - name: Data Sheets
+    docs: https://docs.daloopa.com/docs/data-sheets
+    description: >-
+      Pre-built Excel datasets covering 6,000+ global tickers — a ready-made spreadsheet surface rather
+      than a programmatic one.
+  - name: Scout
+    docs: https://docs.daloopa.com/docs/scout
+    prompt_library: https://docs.daloopa.com/docs/scout-prompt-library
+    description: >-
+      Daloopa's own AI agent for building financial models with source-linked data. A first-party agent
+      surface that sits alongside the MCP server rather than replacing it — Scout is Daloopa's hosted
+      agent, MCP is the bring-your-own-agent path.
+
+- family: Model artifacts
+  kind: generated-file
+  components:
+  - name: Company Excel model
+    operation: download_company_model
+    description: Pre-signed URL to download the Excel model file for a company.
+  - name: Industry Excel model
+    operation: download_industry_model
+    description: Pre-signed URL to download the Excel model file for an industry model.
+  note: >-
+    Delivered as pre-signed URLs rather than response bodies, so a client must follow the URL in a second
+    request.
+
+not_present:
+  web_components: false
+  embeddable_widgets: false
+  hosted_checkout_or_forms: false
+  embedded_dashboards: false
+  loader_libraries: false
+  note: >-
+    No JavaScript element library, no iframe-embeddable dashboard and no CDN-distributed loader. Nothing
+    here is a browser component in the Stripe Elements sense; the pointer is emitted because the add-in and
+    hosted surfaces are genuinely client-side software Daloopa ships, not because a component library exists.
+
+cross_links:
+  packages: packages/daloopa-packages.yml
+  conventions: conventions/daloopa-conventions.yml

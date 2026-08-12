@@ -1,0 +1,81 @@
+generated: '2026-08-11'
+method: probed
+source: https://trust.daloopa.com/
+description: >-
+  Daloopa operates a Vanta-hosted trust center at trust.daloopa.com. Its EXISTENCE is verified; its
+  CONTENTS are not publicly machine-readable. This artifact records exactly that boundary and names no
+  certification that could not be read from a public source.
+
+trust_center:
+  published: true
+  url: https://trust.daloopa.com/
+  vendor: Vanta
+  vendor_evidence: >-
+    Served HTML contains a `vanta-entry-loader` element and 36 references to vanta.com asset hosts. Page
+    title is "daloopa.com Trust Center".
+
+x-evidence:
+  fetched: '2026-08-11'
+  probes:
+  - {url: 'https://trust.daloopa.com/', http_status: 200, content_type: 'text/html', note: 'JS-rendered SPA shell; no certification text in the served markup'}
+  - {url: 'https://trust.daloopa.com/api/trustPage', http_status: 200, content_type: 'text/html', note: 'SPA catch-all, not JSON — a miss'}
+  - {url: 'https://trust.daloopa.com/api/v1/trust-center', http_status: 200, content_type: 'text/html', note: 'SPA catch-all, not JSON — a miss'}
+  - {url: 'https://trust.daloopa.com/data.json', http_status: 200, content_type: 'text/html', note: 'SPA catch-all, not JSON — a miss'}
+  - {url: 'https://api.vanta.com/v1/trust-pages/daloopa.com', http_status: 401, content_type: 'application/json', note: 'authenticated endpoint'}
+  - {url: 'https://daloopa.com/privacy-policy', http_status: 200, note: 'GDPR referenced; no SOC 2 / ISO 27001 named'}
+  - {url: 'https://daloopa.com/terms-of-use', http_status: 200, note: 'no certification named'}
+  - {url: 'https://daloopa.com/products/api', http_status: 200, note: 'no certification named'}
+  - {url: 'https://docs.daloopa.com/docs/excel-add-in-security-and-architecture', http_status: 200, note: 'IT/infosec review page; no certification named in the markdown'}
+
+certifications: []
+certifications_note: >-
+  DELIBERATELY EMPTY. Every host and path above was probed and no named certification (SOC 2, ISO 27001,
+  PCI DSS, HIPAA, FedRAMP) could be read from any public, unauthenticated source. A Vanta trust center of
+  this kind normally lists frameworks and gates the underlying reports behind an NDA request form, so it
+  is likely certifications exist — but "likely" is not evidence, and none are recorded here. No
+  `type: Compliance` pointer is emitted in apis.yml for the same reason.
+  If Daloopa wants this reflected, the fix on their side is small: name the frameworks in server-rendered
+  HTML, or link the trust center from a /.well-known/security.txt.
+
+published_security_material:
+- name: Excel Add-In Security and Architecture
+  url: https://docs.daloopa.com/docs/excel-add-in-security-and-architecture
+  note: >-
+    A dedicated page describing how the add-in is built, what it can and cannot access in a desktop
+    environment, and the controls governing its behavior — written explicitly to give customer IT and
+    infosec teams what they need for approval. A genuinely mature artifact for an Office add-in.
+- name: Privacy and Data Collection Disclosure for MCP Access
+  url: https://docs.daloopa.com/docs/daloopa-privacy-and-data-collection-disclosure-for-mcp-access
+  note: >-
+    A separate privacy disclosure written specifically for the MCP surface. Very few providers in the
+    catalog publish an agent-surface-specific privacy disclosure at all.
+- name: Single Sign-On
+  url: https://docs.daloopa.com/docs/single-sign-on
+  note: Microsoft Entra (Azure AD) SSO integration guide.
+- name: Privacy Policy
+  url: https://daloopa.com/privacy-policy
+- name: Terms of Use
+  url: https://daloopa.com/terms-of-use
+
+api_security_controls:
+  key_rotation: Published six-month API key rotation cycle.
+  ip_allowlisting: Available on request — restricts API access to pre-approved addresses.
+  source: https://docs.daloopa.com/docs/api-authentication
+
+vulnerability_disclosure:
+  published: false
+  security_txt: false
+  bug_bounty: null
+  security_contact: null
+  note: >-
+    No security.txt on any of the five hosts, no published vulnerability disclosure or responsible
+    disclosure policy, and no HackerOne/Bugcrowd/Intigriti program found. No dedicated security@ address is
+    published; the only contact addresses are sales@, support@ and api-support@daloopa.com. No
+    VulnerabilityDisclosure artifact or `type: Security` pointer is emitted, because there is no program to
+    point at.
+
+cross_links:
+  domain_security: security/daloopa-domain-security.yml
+  well_known: well-known/daloopa-well-known.yml
+  conformance: conformance/daloopa-conformance.yml
+  authentication: authentication/daloopa-authentication.yml

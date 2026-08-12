@@ -1,0 +1,191 @@
+generated: '2026-08-11'
+method: derived
+source: >-
+  Derived by binding the nine published MCP tools (mcp/daloopa-mcp.yml, transcribed from
+  https://docs.daloopa.com/docs/daloopa-mcp) to the 41 operations in the live REST OpenAPI
+  (openapi/daloopa-api-openapi.yml, harvested from https://app.daloopa.com/swagger.json).
+purpose: >-
+  Make the MCP tool a first-class discovery unit bound to its backing REST operation. Daloopa is an
+  unusually clean case: the MCP server is a deliberately NARROWED projection of the REST API — nine
+  read-oriented tools over 41 operations — and every tool maps to a real, publicly documented REST
+  operation. Nothing in the MCP surface is invented; the interesting finding is what was left OUT.
+
+surfaces:
+  rest_openapi:
+    path: openapi/daloopa-api-openapi.yml
+    source: https://app.daloopa.com/swagger.json
+    gated: false
+    note: >-
+      The spec itself is served ANONYMOUSLY at the API host root (200, 182KB, OpenAPI 3.0.3) even though
+      every operation requires credentials. 41 operations, 38 paths, 16 tags.
+  mcp:
+    url: https://mcp.daloopa.com/server/mcp
+    gated: true
+    note: >-
+      tools/list returns 401 with a spec-compliant OAuth challenge. Tool names and descriptions come from
+      the published docs; live inputSchema requires authenticated introspection.
+  mcp_service_openapi:
+    path: openapi/daloopa-mcp-service-openapi.json
+    source: https://mcp.daloopa.com/openapi.json
+    gated: false
+    note: Auth/consumption/discovery endpoints surrounding the MCP transport, not the tools themselves.
+  graphql: null
+
+coverage:
+  mcp_tools: 9
+  rest_operations: 41
+  tools_bound_to_rest: 9
+  tools_unbound: 0
+  rest_operations_with_a_tool: 12
+  rest_only_operations: 29
+  binding_rate_tools: 1.0
+  binding_rate_operations: 0.29
+
+crosswalk:
+- tool: discover_companies
+  category: discovery
+  rest: [companies_list_v3]
+  binding: rest
+  confidence: high
+  note: >-
+    Docs describe searching by ticker or name and returning ticker, name and company_id — exactly the
+    shape of GET /api/v3/companies with its keyword filter. The tool also surfaces
+    latest_calendar_quarter / latest_fiscal_quarter, which the published Agent Skills use as the anchor
+    for all period math, and which the same operation returns.
+- tool: discover_company_series
+  category: discovery
+  rest: [company_series_list, list_taxonomy_metrics_v3]
+  binding: rest
+  confidence: high
+  note: >-
+    Primary binding is GET /api/v3/companies/series (financial series for a company with filtering).
+    Taxonomy metrics is the standardized-metric counterpart the docs describe as the way to find metric
+    IDs across companies.
+- tool: discover_company_documents
+  category: documents
+  rest: [company_document_lookup_v3]
+  binding: rest
+  confidence: high
+  note: >-
+    One-to-one. GET /api/v3/documents returns paginated documents for a company filtered by
+    calendar_quarters or fiscal_quarters, with filing type, filing date, title and document id.
+- tool: get_company_fundamentals
+  category: fundamentals
+  rest: [get_company_fundamentals_v3, get_fundamentals_series, get_fundamental_updates]
+  binding: rest
+  confidence: high
+  note: >-
+    Primary is GET /api/v3/companies/fundamentals. get_fundamentals_series resolves series context for up
+    to 100 fundamental IDs; get_fundamental_updates provides the since-timestamp delta. The tool composes
+    across these rather than mapping to one.
+- tool: get_document_content
+  category: documents
+  rest: [retrieve_document_content, retrieve_document_metadata, retrieve_document]
+  binding: rest
+  confidence: high
+  note: >-
+    Composite. The tool's described behavior — return processed text, with large filings divided into
+    named sections so a specific section can be requested — is exactly the
+    /content + /metadata pair. /metadata returns the section list and the recommended_call hint;
+    /content returns the text with a 100000-character cap unless full_content=true. The bare
+    GET /documents/{id} returns a signed URL to the original file.
+- tool: search_documents
+  category: documents
+  rest: [opensearch_lightweight_search_v3]
+  binding: rest
+  confidence: high
+  note: >-
+    POST /api/v3/documents/keyword-search. This is also the mandated fallback for earnings call
+    transcripts, which are excluded from whole-document access and return 403 on get_document_content.
+- tool: get_stock_prices
+  category: market_data
+  rest: [get_company_market_data, get_company_adjustment_factors]
+  binding: rest
+  confidence: high
+  note: >-
+    GET /api/v3/companies/{company_id}/stock-prices returns daily OHLCV. Adjustment factors is the
+    corporate-action companion needed for a correct split/dividend-adjusted series; the docs describe the
+    tool as supporting multiple calculations, which requires it.
+- tool: list_skills
+  category: skills
+  rest: [list_investing_skills]
+  binding: rest
+  confidence: high
+  note: >-
+    GET /api/v3/investing-skills returns the catalog of investing skills with slug, title, description and
+    declared inputs — field-for-field what the tool is documented to return.
+- tool: get_skill
+  category: skills
+  rest: [retrieve_investing_skill]
+  binding: rest
+  confidence: high
+  note: >-
+    GET /api/v3/investing-skills/{investing_skill_name} returns a single skill's full prompt content,
+    declared inputs and required tools. The MCP tool adds caller-input substitution on top.
+
+mcp_only: []
+
+rest_only:
+- {operation: check_company_status, tag: Companies, reason: Cache-invalidation/freshness signal — an integration primitive, not an analysis step.}
+- {operation: get_datapoint_consumption, tag: Consumption, reason: Account metering.}
+- {operation: list_datapoint_access_events, tag: Consumption, reason: Account metering.}
+- {operation: get_series_consumption, tag: Consumption, reason: Account metering.}
+- {operation: list_accessed_companies, tag: Consumption, reason: Account metering.}
+- {operation: export_company_model_v3, tag: Export, reason: Bulk Parquet/CSV export — wrong shape for a token-bounded agent context.}
+- {operation: download_company_model, tag: Download, reason: Returns a pre-signed URL for an Excel file.}
+- {operation: download_industry_model, tag: Download, reason: Returns a pre-signed URL for an Excel file.}
+- {operation: get_company_industry_models, tag: Industry Models, reason: Company-to-industry-model mapping with ISINs.}
+- {operation: list_taxonomy_industries, tag: Taxonomy, reason: Taxonomy navigation not exposed as a tool.}
+- {operation: list_taxonomy_sectors, tag: Taxonomy, reason: Taxonomy navigation not exposed as a tool.}
+- {operation: retrieve_taxonomy_metric_v3, tag: Taxonomy, reason: Single-metric detail lookup.}
+- {operation: retrieve_taxonomy_industry_template_v3, tag: Taxonomy, reason: Industry template retrieval.}
+- {operation: list_webhooks, tag: Webhooks, reason: Write/management surface deliberately excluded from the agent tools.}
+- {operation: create_webhook, tag: Webhooks, reason: Write surface deliberately excluded.}
+- {operation: retrieve_webhook, tag: Webhooks, reason: Write/management surface deliberately excluded.}
+- {operation: update_webhook, tag: Webhooks, reason: Write surface deliberately excluded.}
+- {operation: delete_webhook, tag: Webhooks, reason: Write surface deliberately excluded.}
+- {operation: list_webhook_types, tag: Webhooks, reason: Write/management surface deliberately excluded.}
+- {operation: list_webhook_deliveries, tag: Webhooks, reason: Write/management surface deliberately excluded.}
+- {operation: get_webhook_sample_payload, tag: Webhooks, reason: Test tooling.}
+- {operation: test_webhook_delivery, tag: Webhooks, reason: Test tooling.}
+- {operation: add_snowflake_company_subscription, tag: Snowflake, reason: Entitlement write against a data warehouse.}
+- {operation: add_databricks_company_subscription, tag: Databricks, reason: Entitlement write against a data warehouse.}
+- {operation: bulk_add_data_warehouse_company_subscription, tag: Data Warehouse, reason: Entitlement write against a data warehouse.}
+- {operation: create_partnership_user, tag: Partnership, reason: Account provisioning, partner-only.}
+
+findings:
+- id: read-only-agent-surface
+  statement: >-
+    The MCP surface is entirely READ-ONLY. All 15 write/management operations in the REST API — webhook
+    CRUD, Snowflake/Databricks subscription writes, partnership user creation — are absent from the tool
+    list. This looks deliberate rather than incomplete, and it is the right call for a financial data
+    vendor: an agent can read everything it is entitled to and change nothing.
+- id: no-mcp-only-tools
+  statement: >-
+    Every MCP tool maps to a real public REST operation. There are no composite or MCP-exclusive tools
+    whose contract exists only behind the gated tools/list. The REST OpenAPI is therefore a complete and
+    trustworthy description of what the agent surface can actually do, which is unusual — most hosted MCP
+    servers in the catalog have at least some tools with no public REST equivalent.
+- id: metering-not-exposed
+  statement: >-
+    The consumption endpoints are REST-only. An agent burning datapoints against a metered plan cannot ask
+    the MCP server how much budget it has left; only the human's integration code can. Given that Daloopa
+    meters on datapoints consumed and that agents are exactly the class of consumer that will fan out
+    unpredictably, exposing get_datapoint_consumption as a tool would be the single highest-value addition
+    to the tool list.
+- id: freshness-not-exposed
+  statement: >-
+    check_company_status — the documented cache-invalidation primitive — is REST-only. An agent cannot ask
+    whether the data it is about to summarize has been restated since it last looked.
+- id: skills-as-tools
+  statement: >-
+    list_skills / get_skill make the analytical workflow itself a retrievable object over MCP. The same
+    catalog is served over REST and published as 21 open-source SKILL.md files. Daloopa ships the same
+    skill catalog through three channels, which is a coherent agent strategy rather than three
+    disconnected surfaces.
+
+cross_links:
+  mcp: mcp/daloopa-mcp.yml
+  openapi: openapi/daloopa-api-openapi.yml
+  skills: skills/_index.yml
+  conventions: conventions/daloopa-conventions.yml

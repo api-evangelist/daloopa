@@ -1,0 +1,77 @@
+generated: '2026-08-11'
+method: searched
+source: https://daloopa.com/ (navigation, footer and sitemap) + https://docs.daloopa.com/docs/checking-consumption
+provider: Daloopa
+providerId: daloopa
+description: >-
+  Daloopa publishes NO public pricing. There is no pricing page, no plan tiers, no rate card and no
+  self-serve checkout anywhere on the marketing site, the docs, or the app. Access is sold through a
+  demo/sales motion and priced by contract. This is recorded as an explicit zero rather than omitted, so
+  the absence is legible as a checked fact.
+
+plan_count: 0
+public_pricing: false
+self_serve_signup: false
+free_tier: false
+trial:
+  public: false
+  note: >-
+    A trial mechanism EXISTS but is partner-mediated, not public. POST /api/v3/partnerships/user creates a
+    partnership pre-account under an authenticated partner's program, with a monthly datapoint limit set
+    by a chosen plan of BASE or PLUS, and the pre-account expires 30 days after creation. This is the only
+    place in Daloopa's entire public surface where named plan identifiers appear.
+
+plans: []
+
+named_plan_identifiers_observed:
+- id: BASE
+  source: 'POST /api/v3/partnerships/user (plan enum)'
+  price: null
+  note: Determines the monthly datapoint limit for a partner-provisioned trial pre-account. No price published.
+- id: PLUS
+  source: 'POST /api/v3/partnerships/user (plan enum)'
+  price: null
+  note: Higher monthly datapoint limit than BASE. No price published.
+
+probe_evidence:
+- {url: 'https://daloopa.com/pricing', status: 404}
+- {url: 'https://daloopa.com/contact', status: 200, note: 'redirects to https://daloopa.com/demo'}
+- {url: 'https://daloopa.com/demo', status: 200}
+- {url: 'https://daloopa.com/sitemap_index.xml', status: 200, note: 'full page sitemap enumerated; contains no pricing or plans page'}
+
+metering_model:
+  unit: datapoints
+  period: monthly
+  note: >-
+    Although prices are unpublished, the METERING model is fully documented and machine-readable, which is
+    more than most enterprise-priced vendors expose. GET /api/v3/consumption returns monthly_limit — either
+    the numeric cap or the literal string 'Unlimited' — alongside consumption for the window. Per-company
+    series access is separately capped and readable via GET /api/v3/consumption/series-access. A customer
+    can therefore see exactly what they are burning against their contracted limit at runtime, even though
+    they cannot see what it costs.
+  operations:
+  - get_datapoint_consumption
+  - list_datapoint_access_events
+  - get_series_consumption
+  - list_accessed_companies
+  docs: https://docs.daloopa.com/docs/checking-consumption
+  secondary_limit:
+    name: subscription slots
+    note: >-
+      Company subscriptions are capped per user. bulk_add_data_warehouse_company_subscription honors the
+      remaining slot count and returns overflow in skipped_limit_exceeded rather than failing.
+
+sales_motion:
+  entry_points:
+  - {name: Request a demo, url: 'https://daloopa.com/demo'}
+  - {name: Sales, email: sales@daloopa.com}
+  segments: [hedge funds, mutual funds, investment banking, equity research, private equity]
+
+finding: >-
+  The gap is disclosure, not instrumentation. Daloopa built the consumption API a metered customer needs
+  and documented it well, then published no price for the thing being metered. An agent or a buyer can
+  answer "how much have I used" precisely and "what will this cost" not at all.
+
+cross_links:
+  rate_limits: rate-limits/daloopa-rate-limits.yml
+  conventions: conventions/daloopa-conventions.yml

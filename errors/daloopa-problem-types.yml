@@ -1,0 +1,139 @@
+generated: '2026-08-11'
+method: derived
+source: openapi/daloopa-api-openapi.yml (4xx/5xx responses across 41 operations), enriched from https://docs.daloopa.com/reference/
+format: proprietary
+rfc9457: false
+content_type: application/json
+description: >-
+  Error catalog derived from every declared 4xx/5xx response in the Daloopa API v3 OpenAPI, enriched with
+  the remediation semantics published on the API reference pages. Daloopa does NOT use RFC 9457
+  application/problem+json. It declares 148 error responses across 41 operations using SEVEN different
+  JSON envelope shapes.
+
+envelope_inconsistency:
+  distinct_shapes: 7
+  finding: >-
+    This is the most significant machine-readability defect in an otherwise well-documented API. A client
+    cannot write a single error parser. The dominant shape covers 107 of 148 declared error responses,
+    but the remaining 41 spread across six other shapes — and the split is not by status code, it is by
+    handler. add_databricks_company_subscription returns {detail} on 401 and {error, message, status_code}
+    on 400. An agent parsing errors must branch on operation, not on status.
+  shapes:
+  - fields: [detail]
+    count: 107
+    origin: Django REST Framework default exception handler
+    example_operations: [companies_list_v3, get_company_fundamentals_v3, retrieve_webhook]
+  - fields: [error, message, status_code]
+    count: 27
+    example_operations: [add_databricks_company_subscription, add_snowflake_company_subscription]
+  - fields: [error]
+    count: 6
+    example_operations: [retrieve_document]
+  - fields: [message]
+    count: 3
+    example_operations: [add_databricks_company_subscription]
+  - fields: [success, error, details]
+    count: 2
+    example_operations: [company_document_lookup_v3]
+  - fields: [success, error, message]
+    count: 2
+    example_operations: [company_document_lookup_v3]
+  - fields: [available_sections, details, error, reason]
+    count: 1
+    example_operations: [retrieve_document_content]
+    note: The most USEFUL of the seven — it returns the valid section names so a caller can self-correct.
+
+status_coverage:
+  '400': 29
+  '401': 38
+  '403': 23
+  '404': 14
+  '429': 36
+  '500': 8
+
+problems:
+- status: 400
+  name: Bad Request
+  envelope_variants: [detail, 'error+message+status_code', error, 'success+error+details', 'available_sections+details+error+reason']
+  meaning: Invalid, malformed, or mutually-exclusive parameters.
+  known_causes:
+  - Passing both calendar_quarters and fiscal_quarters (they are mutually exclusive).
+  - Malformed period string — see the canonical period format standards.
+  - Requesting document content for a filing type outside the allowlist (10-K, 10-Q, 8-K, News Article, Others); a `reason` is populated.
+  - Requesting an unknown document section name.
+  remediation: >-
+    For unknown-section errors the response carries available_sections — read it and retry with a valid
+    name rather than failing the job. For period errors, normalize to the canonical format first.
+  docs: https://docs.daloopa.com/docs/period-format-standards
+
+- status: 401
+  name: Unauthorized
+  envelope_variants: [detail]
+  meaning: Missing, malformed, or rejected credentials.
+  known_causes:
+  - Sending the legacy plaintext API key to a /api/v3/ endpoint — v3 accepts ONLY Basic base64(email:api_key). This is the single most likely cause during v2→v3 migration.
+  - Expired API key (keys are rotated on a six-month cycle).
+  - Calling from an IP outside the allowlist when IP validation has been enabled on the account.
+  remediation: Rebuild the Authorization header as 'Basic base64(<email>:<api_key>)'.
+  docs: https://docs.daloopa.com/docs/api-authentication
+
+- status: 403
+  name: Forbidden
+  envelope_variants: [detail, 'error+message+status_code']
+  meaning: Authenticated but not entitled to this resource.
+  known_causes:
+  - Company or dataset outside the caller's subscription/entitlement.
+  - Requesting whole-document access to an earnings call transcript — transcripts are DELIBERATELY excluded from full-document retrieval and always return 403.
+  - Snowflake/Databricks subscription calls without the corresponding warehouse permission on the account.
+  remediation: >-
+    For transcripts, this 403 is by design and is not retryable — switch to POST
+    /api/v3/documents/keyword-search to query transcript content. For entitlement 403s, contact the
+    account team; retrying will not help.
+
+- status: 404
+  name: Not Found
+  envelope_variants: [detail, 'error+message+status_code', error]
+  meaning: The identified resource does not exist or is not visible to the caller.
+  known_causes:
+  - Unknown document_id, webhook id, taxonomy metric id, or industry id.
+  - Ticker with no exportable model.
+  - A webhook that belongs to a different API key (ownership is scoped per key).
+  remediation: >-
+    Note that batch lookups do NOT 404 — get_fundamentals_series silently omits IDs not visible to the
+    caller. A 404 therefore only appears on single-resource endpoints.
+
+- status: 429
+  name: Too Many Requests
+  envelope_variants: [detail]
+  meaning: Account-wide rate limit of 120 requests/minute exceeded.
+  retryable: true
+  remediation: >-
+    Expected and recoverable. Back off exponentially with jitter (docs suggest 1s, 2s, 4s, 8s), cap the
+    retries, and pace steady-state traffic at roughly 2 req/s. No Retry-After or RateLimit-* header is
+    declared, so the backoff must be computed client-side.
+  docs: https://docs.daloopa.com/docs/rate-limits
+  see: rate-limits/daloopa-rate-limits.yml
+
+- status: 500
+  name: Internal Server Error
+  envelope_variants: [error, message, 'success+error+message']
+  meaning: Unhandled server-side failure.
+  declared_on: [company_document_lookup_v3, opensearch_lightweight_search_v3, retrieve_document, retrieve_document_content, retrieve_document_metadata, add_snowflake_company_subscription, add_databricks_company_subscription, bulk_add_data_warehouse_company_subscription]
+  note: >-
+    500 is declared only on the document search/retrieval surface and the data-warehouse subscription
+    surface — the two paths with heavy downstream dependencies (OpenSearch, Snowflake, Databricks).
+  remediation: Retry with backoff; if persistent, contact support@daloopa.com.
+
+partial_success_pattern:
+  operation: bulk_add_data_warehouse_company_subscription
+  status: 200
+  note: >-
+    Not an error, but an important non-error failure mode. When the requested company count exceeds the
+    account's remaining subscription slots, the call returns 200 and processes only the first N that fit;
+    the remainder come back in a `skipped_limit_exceeded` array. A client that checks only the status code
+    will silently under-subscribe. Always read skipped_limit_exceeded.
+
+cross_links:
+  conventions: conventions/daloopa-conventions.yml
+  rate_limits: rate-limits/daloopa-rate-limits.yml
+  authentication: authentication/daloopa-authentication.yml

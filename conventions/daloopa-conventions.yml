@@ -1,0 +1,175 @@
+generated: '2026-08-11'
+method: searched
+source: >-
+  https://docs.daloopa.com/docs/api-authentication + /docs/rate-limits + /docs/caching-strategy +
+  /docs/period-format-standards + /docs/understanding-units-quarterization +
+  /docs/fundamental-uniqueness-restatements + /docs/best-practices, cross-checked against
+  openapi/daloopa-api-openapi.yml
+summary: >-
+  Cross-cutting request/response semantics for the Daloopa REST API v3 and the hosted MCP server.
+  Daloopa documents its runtime semantics unusually well for a data vendor — there are dedicated pages
+  for caching, period formats, unit normalization, restatement handling and rate limits. The two real
+  gaps are request idempotency (none) and rate-limit response headers (none declared).
+
+authentication:
+  styles: [http_basic]
+  header: Authorization
+  format: 'Basic base64(<email>:<api_key>)'
+  mcp_styles: [oauth2_pkce_dcr, bearer_token_24h, apikey_header]
+  see: authentication/daloopa-authentication.yml
+
+versioning:
+  scheme: path-based major version
+  current: v3
+  base: https://app.daloopa.com/api/v3
+  previous: v2 (available during the migration window)
+  style: >-
+    Batched breaking-change release. Daloopa groups breaking changes into a single clearly versioned
+    upgrade rather than shipping them piecemeal, so consumers migrate once. v3 is described as a
+    "superset-minus-two" of v2 — every v2 endpoint exists under /api/v3/ except two retired ones, and
+    unlisted endpoints behave identically apart from the base path.
+  see: lifecycle/daloopa-lifecycle.yml
+
+pagination:
+  style: limit/offset
+  params: [limit, offset]
+  param_coverage: 13 of 41 operations declare limit + offset
+  response_fields: [count, next, previous, results]
+  framework_signature: Django REST Framework LimitOffsetPagination
+  defaults:
+    webhook_deliveries: {default_page_size: 500, max_page_size: 500}
+  note: >-
+    v3 made GET /api/v3/companies paginated — in v2 it returned the entire result set in one response.
+    Clients must iterate pages rather than expect a full list.
+
+batching:
+  supported: true
+  documented_caps:
+    get_fundamentals_series: 100 fundamental IDs per call
+  behavior_note: >-
+    IDs not in the dataset visible to the caller are SILENTLY OMITTED from the response rather than
+    erroring. A client that submits 100 IDs and receives 60 gets no explicit signal about the other 40 —
+    reconcile requested vs returned IDs yourself.
+  see: rate-limits/daloopa-rate-limits.yml
+
+idempotency:
+  documented: false
+  request_idempotency: false
+  header: null
+  note: >-
+    No Idempotency-Key mechanism exists. The string "idempotency" appears exactly once in the entire
+    documentation set and it refers to CONSUMER-SIDE webhook dedupe ("dedupe on document.document_id"),
+    not to a request-idempotency contract on writes. The write surface is small (webhook CRUD, data
+    warehouse subscriptions, partnership user creation), but POST /api/v3/webhooks and
+    POST /api/v3/partnerships/user are both non-idempotent creates with no replay protection.
+
+rate_limiting:
+  limit: 120 requests per minute, account-wide
+  status_on_exhaustion: 429
+  headers_declared: false
+  see: rate-limits/daloopa-rate-limits.yml
+
+error_envelope:
+  consistent: false
+  formats: 7
+  dominant: {detail: string}
+  dominant_share: 107 of 148 declared 4xx/5xx responses
+  rfc9457: false
+  content_type: application/json
+  note: >-
+    Seven distinct error envelope shapes are declared across the spec. Auth and throttling errors use the
+    Django REST Framework {detail} shape; several handlers use {error, message, status_code}; a few use
+    {error}, {message}, {success, error, details} or {success, error, message}. A client cannot write one
+    error parser.
+  see: errors/daloopa-problem-types.yml
+
+caching:
+  documented: true
+  docs: https://docs.daloopa.com/docs/caching-strategy
+  guidance: >-
+    Daloopa publishes an explicit what-to-cache/how-long guide. Company and series STRUCTURE is stable and
+    should be cached; VALUES change and should be refreshed against freshness signals rather than on a timer.
+  freshness_signals:
+    operation: check_company_status
+    fields:
+      latest_datapoint_created_at: when the latest publish notification for the company was created
+      latest_datapoint_updated_at: the latest data change for the company
+      model_updated_at: when the company's Excel model was last touched
+    note: >-
+      This is the intended cache-invalidation primitive — poll status, compare timestamps, refetch only
+      what moved. The push equivalent is the webhook surface.
+  push_alternative: asyncapi/daloopa-webhooks.yml
+
+periods:
+  documented: true
+  docs: https://docs.daloopa.com/docs/period-format-standards
+  canonical_format: 'YYYYQN (e.g. 2024Q4); annual and other period forms per the standards page'
+  calendar_vs_fiscal:
+    both_supported: true
+    params: [calendar_periods, fiscal_periods, calendar_quarters, fiscal_quarters]
+    mutually_exclusive: true
+    note: >-
+      Fiscal and calendar periods are NOT interchangeable and this is the single most common integration
+      error the docs call out. fiscal_quarters are translated to the company's calendar quarters before
+      filtering, and document responses carry BOTH calendar_quarter and fiscal_quarter so a caller can
+      always tell which frame a row is in. v3 renamed the period fields specifically to make the
+      distinction explicit in the field names.
+
+units_and_values:
+  documented: true
+  docs: https://docs.daloopa.com/docs/understanding-units-quarterization
+  fields: [value_raw, value_normalized]
+  note: >-
+    value_raw is as-reported; value_normalized is unit-normalized and quarterized. They can legitimately
+    differ. Callers must choose deliberately rather than assume one is the "real" number.
+
+identity_and_restatements:
+  documented: true
+  docs: https://docs.daloopa.com/docs/fundamental-uniqueness-restatements
+  warning: >-
+    fundamental_id is NOT STABLE. It cannot be used as a durable primary key across pulls. The docs
+    describe how to resolve a single canonical value and what a restated fundamental is. A `restated`
+    query parameter exists on the fundamentals surface.
+  stable_keys: [company_id, series_id, document_id]
+  see: data-model/daloopa-data-model.yml
+
+request_id_tracing:
+  documented: false
+  note: No request-id/correlation-id header is documented or declared in the spec.
+
+field_expansion:
+  supported: partial
+  params: [include_derived, sections, series_ids, unit]
+  note: >-
+    No general sparse-fieldset mechanism. Selected endpoints take targeted narrowing parameters — most
+    notably `sections` on document content retrieval, which is the intended way to avoid pulling a whole
+    10-K, and `include_derived` on the fundamentals surface.
+
+content_negotiation:
+  response_formats: [application/json, application/octet-stream]
+  export_formats: [parquet, csv]
+  export_default: parquet
+  note: >-
+    GET /api/v3/export/{ticker} defaults to Parquet as of v3; pass output_format=csv for the v2 behavior.
+    Model download endpoints return a pre-signed URL rather than the file bytes.
+
+document_access_rules:
+  documented: true
+  rules:
+  - Document content is capped at max_characters (100000) by default; truncated=true is set when the cap is hit. Pass full_content=true to bypass.
+  - Filing types outside the allowlist (10-K, 10-Q, 8-K, News Article, Others) return 400 with a reason.
+  - An unknown section name returns 400 WITH the available_sections list so the caller can self-correct — a genuinely good recoverable-error design.
+  - Earnings call transcripts are excluded from whole-document access and return 403; use POST /api/v3/documents/keyword-search instead.
+  - The /metadata endpoint returns a recommended_call hint telling the caller whether to fetch the whole document or a specific section next.
+  note: >-
+    The recommended_call hint and the available_sections-on-400 pattern are explicitly agent-shaped
+    affordances: the API tells the caller what to do next rather than only what went wrong.
+
+cross_links:
+  authentication: authentication/daloopa-authentication.yml
+  errors: errors/daloopa-problem-types.yml
+  lifecycle: lifecycle/daloopa-lifecycle.yml
+  rate_limits: rate-limits/daloopa-rate-limits.yml
+  webhooks: asyncapi/daloopa-webhooks.yml
+  data_model: data-model/daloopa-data-model.yml
+  mcp: mcp/daloopa-mcp.yml

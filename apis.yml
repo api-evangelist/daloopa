@@ -1,23 +1,176 @@
 aid: daloopa
 name: Daloopa
-description: 'Daloopa is a company surfaced via the API Evangelist harvest backlog (source: secondary-market)
-  and added to the network as a stub for full-pipeline profiling.'
+description: >-
+  Daloopa is an AI-powered fundamental financial data platform for institutional investors, providing
+  analyst-verified, source-linked financial data extracted from SEC filings, earnings transcripts,
+  investor presentations and press releases. Coverage spans 6,000+ global public companies with roughly
+  14 years of history, and every datapoint is hyperlinked back to the exact location in the original
+  source document for auditability. The company sells to hedge funds, mutual funds, investment banks,
+  equity research and private equity teams, and delivers the same dataset across a REST API, a hosted
+  remote MCP server, an Excel add-in, prebuilt Data Sheets, the Scout AI modeling agent, and native
+  cloud-warehouse shares via Snowflake, Databricks and AWS S3.
 url: https://raw.githubusercontent.com/api-evangelist/daloopa/refs/heads/main/apis.yml
+image: https://avatars.githubusercontent.com/u/42851514?v=4
 x-type: company
 x-source: harvest:secondary-market
-x-tier: stub
-x-tier-reason: harvest
-specificationVersion: '0.20'
+specificationVersion: '0.21'
 created: '2026-08-11'
 modified: '2026-08-11'
 tags:
-- Company
-apis: []
+- financial-data
+- fundamental-data
+- market-data
+- investment-research
+- equity-research
+- sec-filings
+- earnings
+- fintech
+- mcp
+- agent-native
+- agent-skills
+- webhooks
+- data-warehouse
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+apis:
+- name: Daloopa API v3
+  description: >-
+    REST API over Daloopa's fundamental dataset — company discovery, fundamental series and values,
+    calendar/fiscal period handling, taxonomy metrics and industry templates, SEC document lookup,
+    document content retrieval and keyword search, daily OHLCV stock prices, Excel model downloads,
+    Parquet/CSV bulk export, consumption metering, data-warehouse subscription management, and a
+    self-service webhook surface. 41 operations across 16 tags. Authenticated with HTTP Basic using
+    base64(email:api_key).
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - financial-data
+  - fundamental-data
+  - market-data
+  - investment-research
+  - sec-filings
+  - earnings
+  - webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Overlay
+    url: overlays/daloopa-api-security-overlay.yaml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+- name: Daloopa MCP Server
+  description: >-
+    Hosted remote MCP server (Streamable HTTP) exposing nine tools over the same fundamental dataset —
+    discover_companies, discover_company_series, discover_company_documents, get_company_fundamentals,
+    get_document_content, search_documents, get_stock_prices, list_skills and get_skill. Every returned
+    datapoint carries its source location. Authenticated via MCP OAuth 2.1 with dynamic client
+    registration and PKCE, via a 24-hour bearer token minted from an API key, or via an X-API-KEY header.
+  humanURL: https://docs.daloopa.com/docs/daloopa-mcp
+  baseURL: https://mcp.daloopa.com/server/mcp
+  tags:
+  - mcp
+  - agent-native
+  - financial-data
+  - fundamental-data
+  - investment-research
+  properties:
+  - type: MCPServer
+    url: mcp/daloopa-mcp.yml
+  - type: MCPServer
+    url: https://mcp.daloopa.com/server/mcp
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: OpenAPI
+    url: openapi/daloopa-mcp-service-openapi.json
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
 common:
 - type: Website
-  url: https://forgeglobal.com/daloopa_stock/
+  url: https://daloopa.com/
+- type: DeveloperPortal
+  url: https://docs.daloopa.com/docs/overview
+- type: Documentation
+  url: https://docs.daloopa.com/docs/overview
+- type: APIReference
+  url: https://docs.daloopa.com/reference/companies_list_v3
+- type: GettingStarted
+  url: https://docs.daloopa.com/docs/api-authentication
+- type: Support
+  url: https://docs.daloopa.com/docs/contact-us
+- type: Blog
+  url: https://daloopa.com/blog
+- type: BlogRSS
+  url: https://daloopa.com/blog/feed
+- type: GitHubOrganization
+  url: https://github.com/daloopa
+- type: SignUp
+  url: https://daloopa.com/demo
+- type: TermsOfService
+  url: https://daloopa.com/terms-of-use
+- type: PrivacyPolicy
+  url: https://daloopa.com/privacy-policy
+- type: StatusPage
+  url: https://status.daloopa.com/
+- type: Deprecation
+  url: lifecycle/daloopa-lifecycle.yml
+- type: Lifecycle
+  url: lifecycle/daloopa-lifecycle.yml
+- type: LLMSTxt
+  url: llms/daloopa-llms.txt
+- type: LLMSTxt
+  url: https://docs.daloopa.com/llms.txt
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Packages
+  url: packages/daloopa-packages.yml
+- type: Conformance
+  url: conformance/daloopa-conformance.yml
+- type: DomainSecurity
+  url: security/daloopa-domain-security.yml
+- type: TrustCenter
+  url: security/daloopa-trust-center.yml
+- type: TrustCenter
+  url: https://trust.daloopa.com/
+- type: Plans
+  url: plans/daloopa-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/daloopa-rate-limits.yml
+- type: Components
+  url: components/daloopa-components.yml
+x-enrichment:
+  date: '2026-08-11'
+  status: enriched
+  artifacts_added: 50
+  pass: local-v1
+

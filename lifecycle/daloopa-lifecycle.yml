@@ -1,0 +1,125 @@
+generated: '2026-08-11'
+method: searched
+source: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+docs: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+description: >-
+  Versioning, deprecation and operational-status posture for the Daloopa API. Daloopa runs a
+  batched-breaking-change model: rather than shipping breaking changes piecemeal, it groups them into a
+  single clearly versioned major release with a written migration guide, so consumers migrate once.
+
+versioning:
+  scheme: path-based major version
+  current: v3
+  current_base: https://app.daloopa.com/api/v3
+  previous: v2
+  previous_base: https://app.daloopa.com/api/v2
+  header_pinning: false
+  note: >-
+    No version header. The version is in the path, so a client's version is whatever base path it is
+    hard-coded to — there is no negotiated or default-latest behavior to be surprised by.
+
+deprecation:
+  policy_published: true
+  policy_url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  rfc8594_sunset_header: false
+  deprecation_header: false
+  migration_guide: true
+  migration_checklist: true
+  status:
+    v3: current
+    v2: deprecated — available during the migration window, unchanged
+  sunset_date: null
+  sunset_note: >-
+    GAP. v2 is stated to be sunset "after the migration window" and Daloopa says it "will communicate the
+    v2 sunset date separately" — but no date is published, and no RFC 8594 Sunset or Deprecation response
+    header is emitted on v2 endpoints. A machine consuming v2 today has no programmatic way to learn that
+    it is on a deprecated version or when it will stop working. The human-readable policy is good; the
+    runtime signal is absent.
+  grace_period: migration window, duration unpublished
+
+breaking_changes_v3:
+- id: auth-standardized
+  summary: >-
+    v3 accepts ONLY the header 'Authorization: Basic base64(email:api_key)'. The legacy plaintext API-key
+    scheme is rejected on v3.
+  action: Update the authorization header before calling any v3 endpoint.
+- id: export-parquet-default
+  summary: GET /api/v3/export/{ticker} returns Parquet by default instead of CSV.
+  action: Pass output_format=csv to retain v2 behavior, or switch the parser (pandas read_csv -> read_parquet).
+- id: companies-paginated
+  summary: GET /api/v3/companies is now paginated with count/next/previous/results instead of returning the full set.
+  action: Iterate pages.
+- id: companies-quarter-fields-renamed
+  summary: earliest_quarter / latest_quarter removed in favor of earliest_calendar_quarter / latest_calendar_quarter.
+  action: Update field references.
+- id: periods-param-removed
+  summary: The ambiguous `periods` (and single `period`) parameters are removed from Fundamentals, Documents and keyword search.
+  action: Use calendar_periods (fundamentals) or calendar_quarters (documents/search). In v2 `periods` meant a calendar quarter, so the replacement is direct.
+- id: deprecated-response-fields-removed
+  summary: Duplicated/ambiguous response fields removed, e.g. `period` on the Documents response.
+  action: Read calendar_quarter / fiscal_quarter instead.
+- id: taxonomy-sub-industry-filter-removed
+  summary: The sub_industry_id query parameter is removed from taxonomy metric endpoints.
+  action: Filter by company_id, series_id or keywords.
+
+removed_endpoints:
+- endpoint: GET /api/v2/taxonomy/sub-industries
+  removed_in: v3
+  replacement: null
+  reason: >-
+    Sub-industry data is no longer exposed; taxonomy is moving to standardized GICS-based Industry and
+    Sector filtering.
+- endpoint: POST /api/v2/series-continuation
+  removed_in: v3
+  replacement: null
+  reason: >-
+    The endpoint existed to track series_id changes. As of October 2025 series_id values are stable and no
+    longer change, so the endpoint only returned outdated data. A rare and creditable case of a vendor
+    retiring an endpoint because it FIXED the underlying data problem the endpoint existed to work around.
+
+deprecated_operations_in_spec:
+  count: 0
+  note: >-
+    No operation in openapi/daloopa-api-openapi.yml carries deprecated: true. The spec describes v3 only;
+    the retired v2 operations are not represented, so the deprecation record lives entirely in the prose
+    migration guide rather than in the machine-readable contract.
+
+data_stability_guarantees:
+- id: series-id-stable
+  since: '2025-10'
+  statement: series_id values are stable and no longer change.
+  impact: Safe to use as a durable key.
+- id: fundamental-id-unstable
+  statement: fundamental_id is NOT stable and must not be used as a durable primary key across pulls.
+  docs: https://docs.daloopa.com/docs/fundamental-uniqueness-restatements
+  impact: >-
+    Callers must resolve a canonical value per the restatements guide rather than caching on fundamental_id.
+
+status_page:
+  published: true
+  url: https://status.daloopa.com/
+  http_status: 200
+  machine_readable: false
+  note: >-
+    A status page is served and returns 200. Its JSON endpoints are not public — /api/v2/status.json,
+    /summary.json and /history.json all return 403 (S3 AccessDenied), so uptime and incident history are
+    human-readable only. No component-level or historical uptime data is machine-consumable.
+
+sla:
+  published: false
+  note: No public SLA or uptime commitment is published; terms are enterprise-contracted.
+
+support:
+  sales: sales@daloopa.com
+  support: support@daloopa.com
+  api_support: api-support@daloopa.com
+  contact_page: https://docs.daloopa.com/docs/contact-us
+  named_csm: true
+  shared_slack: >-
+    Offered — the contact page describes setting up a dedicated shared Slack channel with the Daloopa team.
+  source: https://docs.daloopa.com/docs/daloopa-mcp
+
+cross_links:
+  changelog: changelog/daloopa-changelog.yml
+  conventions: conventions/daloopa-conventions.yml
+  authentication: authentication/daloopa-authentication.yml

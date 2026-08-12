@@ -1,0 +1,5810 @@
+openapi: 3.0.3
+info:
+  title: Daloopa API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+paths:
+  /api/v3/companies:
+    get:
+      operationId: companies_list_v3
+      description: Retrieve paginated list of companies covered by Daloopa with an
+        optional keyword filtering
+      summary: List Companies
+      parameters:
+      - in: query
+        name: keyword
+        schema:
+          type: string
+        description: Filter companies by name or ticker symbol (case-insensitive)
+        examples:
+          SearchByCompanyName:
+            value: Apple
+            summary: Search by company name
+          SearchByTicker:
+            value: AAPL
+            summary: Search by ticker
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      tags:
+      - Companies
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCompanyList'
+              examples:
+                SuccessfulResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 2
+                        name: Apple Inc.
+                        ticker: AAPL
+                        industry_: Technology Hardware, Storage & Peripherals
+                        sector_: Information Technology
+                        actively_maintained: true
+                        model_updated_at: '2024-01-15T10:30:00Z'
+                        earliest_calendar_quarter: 2020Q1
+                        latest_calendar_quarter: 2024Q1
+                        earliest_fiscal_quarter: 2020Q1
+                        latest_fiscal_quarter: 2024Q1
+                        companyidentifier_set:
+                        - identifier_type: ISIN
+                          identifier_value: US0378331005
+                        - identifier_type: CUSIP
+                          identifier_value: 037833100
+                  summary: Successful response
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/fundamentals:
+    get:
+      operationId: get_company_fundamentals_v3
+      description: Retrieve paginated fundamental financial data for a specific company
+        and time periods.
+      summary: Get Company Fundamental Data
+      parameters:
+      - in: query
+        name: calendar_periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'List of calendar reporting periods to include. Mutually exclusive
+          with `fiscal_periods`. Accepted formats: `YYYYQ[1-4]` (quarters), `YYYYH[1-2]`
+          (half-years), or `YYYYFY` (fiscal year). Example: `?calendar_periods=2023Q4&calendar_periods=2024Q1`.'
+        explode: true
+        style: form
+        examples:
+          QuarterlyCalendarPeriods:
+            value:
+            - 2023Q4
+            - 2024Q1
+            - 2024Q2
+            summary: Quarterly Calendar Periods
+            description: Recent quarterly calendar periods
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: created_at
+        schema:
+          type: string
+          format: date-time
+        description: Minimum creation timestamp (ISO-8601). Used together with `updated_at`
+          to form an inclusive range; `created_at` must be ≤ `updated_at`.
+        examples:
+          CreatedAfter:
+            value: '2025-06-01T00:00:00Z'
+            summary: Created After
+            description: Return records created on/after June 1, 2025 (UTC).
+      - in: query
+        name: document_id
+        schema:
+          type: integer
+        description: Filter fundamentals to those from a specific document ID.
+      - in: query
+        name: fiscal_periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'List of fiscal reporting periods to include. Mutually exclusive
+          with `calendar_periods`. Accepted formats: `YYYYQ[1-4]` (quarters), `YYYYH[1-2]`
+          (half-years), or `YYYYFY` (fiscal year). Example: `?fiscal_periods=2023Q4&fiscal_periods=2024Q1`.'
+        explode: true
+        style: form
+        examples:
+          QuarterlyFiscalPeriods:
+            value:
+            - 2023Q4
+            - 2024Q1
+            - 2024Q2
+            summary: Quarterly Fiscal Periods
+            description: Recent quarterly fiscal periods
+      - in: query
+        name: include_derived
+        schema:
+          type: boolean
+        description: Whether to include derived fundamentals. `true` = include derived
+          fundamentals, `false` = exclude derived fundamentals, omit for default behavior
+          (excludes derived).
+        examples:
+          IncludeDerived:
+            value: true
+            summary: Include Derived
+          ExcludeDerived:
+            value: false
+            summary: Exclude Derived
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: restated
+        schema:
+          type: boolean
+        description: Filter by restatement status. `true` = only restated values,
+          `false` = only original values, omit to include both.
+        examples:
+          OnlyRestated:
+            value: true
+            summary: Only Restated
+          OnlyOriginal:
+            value: false
+            summary: Only Original
+      - in: query
+        name: sections
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - BALANCE_SHEET
+            - CASH_FLOW_STATEMENT
+            - DEPRECATED_DATA
+            - GAAP_TO_NON_GAAP
+            - GEOGRAPHICAL_INFORMATION
+            - GUIDANCE
+            - INCOME_STATEMENT
+            - KPIS
+            - OTHER_INFORMATION
+            - SEGMENTAL_INFORMATION
+        description: Optional list of financial statement sections to filter by. Narrows
+          the response to fundamentals whose finantial section matches one of the
+          provided values.
+        explode: true
+        style: form
+        examples:
+          IncomeStatementAndBalanceSheet:
+            value:
+            - INCOME_STATEMENT
+            - BALANCE_SHEET
+            summary: Income Statement and Balance Sheet
+            description: Restrict the response to two top-level sections.
+      - in: query
+        name: series_ids
+        schema:
+          type: array
+          items:
+            type: integer
+        description: 'Optional list of series IDs to filter by. Example: `?series_ids=101&series_ids=205`.'
+        explode: true
+        style: form
+        examples:
+          MultipleSeries:
+            value:
+            - 101
+            - 205
+            - 309
+            summary: Multiple Series
+            description: Filter to a subset of series
+      - in: query
+        name: unit
+        schema:
+          type: string
+          enum:
+          - actual
+          - billion
+          - million
+          - thousand
+          - trillion
+        description: Optional target unit to convert values to. When omitted, values
+          are returned as-reported. Values reported in a currency (e.g. dollars) or
+          as a percentage are not convertible and are returned unchanged.
+        examples:
+          ConvertToMillions:
+            value: million
+            summary: Convert to millions
+            description: Return values scaled to millions.
+      - in: query
+        name: updated_at
+        schema:
+          type: string
+          format: date-time
+        description: Maximum update timestamp (ISO-8601). Used together with `created_at`
+          to form an inclusive range; `created_at` must be ≤ `updated_at`.
+        examples:
+          UpdatedBefore:
+            value: '2025-08-01T23:59:59Z'
+            summary: Updated Before
+            description: Return records updated on/before Aug 1, 2025 (UTC).
+      tags:
+      - Fundamentals
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFundamentalList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/documents:
+    get:
+      operationId: company_document_lookup_v3
+      description: Retrieve paginated list of documents for a specific company, optionally
+        filtered by quarter and filing type. Use `calendar_quarters` or `fiscal_quarters`
+        (repeatable, mutually exclusive) to filter on one or more quarters; `fiscal_quarters`
+        are translated to the company's calendar quarters before filtering. Each document
+        in the response carries both `calendar_quarter` and `fiscal_quarter`. Results
+        are ordered by filing date descending.
+      summary: Company Document Lookup
+      parameters:
+      - in: query
+        name: calendar_quarters
+        schema:
+          type: array
+          items:
+            type: string
+        description: One or more calendar quarters in YYYYQ# format. Repeat the parameter
+          to filter on several at once (e.g., ?calendar_quarters=2024Q1&calendar_quarters=2024Q2).
+          Mutually exclusive with `fiscal_quarters`.
+        explode: true
+        style: form
+        examples:
+          Q12024:
+            value:
+            - 2024Q1
+            summary: Q1 2024
+          2024FirstHalf:
+            value:
+            - 2024Q1
+            - 2024Q2
+            summary: 2024 first half
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: filing_type
+        schema:
+          type: string
+          enum:
+          - 10-K
+          - 10-Q
+          - 8-K
+          - News Article
+          - Other
+          - Transcript
+        description: Type of filing to filter by.
+        examples:
+          QuarterlyReport:
+            value: 10-Q
+            summary: Quarterly Report
+          AnnualReport:
+            value: 10-K
+            summary: Annual Report
+          CurrentReport:
+            value: 8-K
+            summary: Current Report
+      - in: query
+        name: fiscal_quarters
+        schema:
+          type: array
+          items:
+            type: string
+        description: One or more fiscal quarters in YYYYQ# format. Translated to the
+          company's calendar quarters before filtering. Mutually exclusive with `calendar_quarters`.
+        explode: true
+        style: form
+        examples:
+          FiscalQ12024:
+            value:
+            - 2024Q1
+            summary: Fiscal Q1 2024
+      - in: query
+        name: has_fundamentals
+        schema:
+          type: boolean
+        description: When true, restrict the result set to documents that have at
+          least one related Fundamentals row. When omitted or false, behavior is unchanged.
+        examples:
+          OnlyDocumentsWithFundamentals:
+            value: true
+            summary: Only documents with fundamentals
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDocumentMetadataSerializerV3List'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  details:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  message:
+                    type: string
+          description: ''
+  /api/v3/documents/keyword-search:
+    post:
+      operationId: opensearch_lightweight_search_v3
+      description: |-
+        Performs keyword search across multiple documents and returns matches without positional information for faster response times.
+
+        **Key Features:**
+        - Faster than batch search (no positional data retrieval)
+        - Each match includes a unique match_id
+        - Use match_id with the positional-info endpoint to get positions on demand
+        - Supports same filtering and search options as batch search
+
+        **Use Cases:**
+        - Initial search to find relevant documents quickly
+        - When positional information is not immediately needed
+        - Two-step workflow: search first, then get positions for specific matches
+
+        **Workflow:**
+        1. Use this endpoint to quickly find matching documents
+        2. Review results and identify matches of interest
+        3. Call the positional-info endpoint with match_id for precise locations
+      summary: Keyword Search
+      tags:
+      - Documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSearchRequestSerializerV3Request'
+            examples:
+              QuickSearch:
+                value:
+                  keywords:
+                  - operating expenses
+                  options:
+                    size: 50
+                summary: Quick Search
+                description: Fast search across documents without positional data
+              Multi-companySearch:
+                value:
+                  keywords:
+                  - guidance
+                  - outlook
+                  filters:
+                    company_ids:
+                    - 2
+                    - 5
+                    - 10
+                    - 25
+                    filing_types:
+                    - Transcript
+                    - 8-K
+                summary: Multi-company Search
+                description: Search across multiple companies
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BatchSearchRequestSerializerV3Request'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BatchSearchRequestSerializerV3Request'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LightweightBatchSearchResponse'
+              examples:
+                QuickSearch:
+                  value:
+                    keywords:
+                    - operating expenses
+                    options:
+                      size: 50
+                  summary: Quick Search
+                  description: Fast search across documents without positional data
+                Multi-companySearch:
+                  value:
+                    keywords:
+                    - guidance
+                    - outlook
+                    filters:
+                      company_ids:
+                      - 2
+                      - 5
+                      - 10
+                      - 25
+                      filing_types:
+                      - Transcript
+                      - 8-K
+                  summary: Multi-company Search
+                  description: Search across multiple companies
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  details:
+                    type: object
+                example:
+                  success: false
+                  error: Invalid request parameters
+                  details:
+                    keywords:
+                    - Ensure this field has no more than 10 elements.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Authentication credentials were not provided.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: You do not have permission to perform this action.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 60 seconds.
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  message:
+                    type: string
+                example:
+                  success: false
+                  error: An error occurred during search
+                  message: Internal server error
+          description: ''
+  /api/v3/taxonomy/metrics:
+    get:
+      operationId: list_taxonomy_metrics_v3
+      description: Retrieve a list of all available Taxonomy Metrics. Optionally filter
+        by a specific company and series.
+      summary: List Taxonomy Metrics
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: keywords
+        schema:
+          type: array
+          items:
+            type: string
+        description: A list of keywords to filter the KPIs. Maximum of 15 keywords
+          allowed.
+        examples:
+          RevenueAndProfit:
+            value:
+            - revenue
+            - profit
+            summary: Revenue and Profit
+            description: Example keywords to filter KPIs
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: series_id
+        schema:
+          type: integer
+        description: The unique identifier of the series
+        examples:
+          IncomeStatement|TotalRevenue:
+            value: 1319
+            summary: Income Statement | Total Revenue
+            description: Example series ID
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxonomyMetricList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/metrics/{id}:
+    get:
+      operationId: retrieve_taxonomy_metric_v3
+      description: Retrieve detailed information about a specific Taxonomy Metric
+        by its unique identifier.
+      summary: Retrieve Taxonomy Metric
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: The unique identifier of the Taxonomy Metric
+        required: true
+        examples:
+          ExampleMetricID:
+            value: 1
+            summary: Example Metric ID
+            description: An example Metric ID to retrieve details for
+      - in: query
+        name: industry_id
+        schema:
+          type: integer
+        description: The unique identifier of the industry
+      - in: query
+        name: sector_id
+        schema:
+          type: integer
+        description: The unique identifier of the sector
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxonomyMetricData'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/industry-template/{industry_id}:
+    get:
+      operationId: retrieve_taxonomy_industry_template_v3
+      description: Retrieve an industry template for a given IndustryClassification,
+        including associated sectors and active template metrics with associated company
+        series.
+      summary: Retrieve Taxonomy Industry Template
+      parameters:
+      - in: path
+        name: industry_id
+        schema:
+          type: integer
+        description: The unique identifier of the IndustryClassification
+        required: true
+        examples:
+          ExampleIndustryID:
+            value: 1
+            summary: Example Industry ID
+            description: An example IndustryClassification ID to retrieve a template
+              for
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxonomyIndustryTemplate'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/industries:
+    get:
+      operationId: list_taxonomy_industries
+      description: Retrieve Ops industries (IndustryClassification) and their member
+        companies. Optionally filter by company_id (returns that company's industry
+        and peers) or sector_id.
+      summary: List Taxonomy Industries
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: Return the industry for this company along with peer companies
+        examples:
+          ExampleCompanyID:
+            value: 123
+            summary: Example Company ID
+            description: An example Company ID to focus industry matches
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: sector_id
+        schema:
+          type: integer
+        description: Filter industries belonging to the specified GICS sector
+        examples:
+          ExampleSectorID:
+            value: 1
+            summary: Example Sector ID
+            description: An example Ops sector ID
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxonomyIndustryList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/sectors:
+    get:
+      operationId: list_taxonomy_sectors
+      description: Retrieve Ops sectors and their associated Ops industries (IndustryClassification).
+      summary: List Taxonomy Sectors
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxonomySectorList'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/export/{ticker}:
+    get:
+      operationId: export_company_model_v3
+      description: Export file with company fundamentals metadata for a company as
+        Parquet or CSV. Returns Parquet by default; pass `output_format=csv` to receive
+        CSV. Supports both historical and real-time data export.
+      summary: Export Company Fundamentals
+      parameters:
+      - in: query
+        name: output_format
+        schema:
+          type: string
+          enum:
+          - csv
+          - parquet
+          default: parquet
+        description: 'Output file format, either ''csv'' or ''parquet'' (default:
+          parquet)'
+        examples:
+          Parquet:
+            value: parquet
+            description: Return the export as a Parquet file
+          CSV:
+            value: csv
+            description: Return the export as a CSV file
+      - in: query
+        name: real_time
+        schema:
+          type: boolean
+          default: false
+        description: 'Fetch real-time data (default: false)'
+        examples:
+          Real-TimeData:
+            value: true
+            summary: Real-Time Data
+            description: Fetch real-time data for the export
+      - in: query
+        name: show_historical_data
+        schema:
+          type: boolean
+          default: false
+        description: 'Include historical data in export (default: false)'
+        examples:
+          IncludeHistorical:
+            value: true
+            summary: Include Historical
+            description: Include historical data in the export
+      - in: path
+        name: ticker
+        schema:
+          type: string
+        description: Company ticker symbol (e.g., AAPL, MSFT, AMZN)
+        required: true
+        examples:
+          Apple:
+            value: AAPL
+            description: Apple Inc. ticker symbol
+          Microsoft:
+            value: MSFT
+            description: Microsoft Corporation ticker symbol
+      tags:
+      - Export
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportModelSerializerV3'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: No exportable data available for TICKER
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/series:
+    get:
+      operationId: company_series_list
+      description: Retrieve financial series data for a specific company with optional
+        filtering
+      summary: Get Company Series Data
+      parameters:
+      - in: query
+        name: calendar_periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of calendar periods to restrict returned series values (e.g.,
+          2023Q1, 2023Q2). Mutually exclusive with `fiscal_periods` and `periods`.
+        examples:
+          RecentQuarters:
+            value:
+            - 2023Q4
+            - 2024Q1
+            summary: Recent quarters
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: Unique identifier for the company
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+      - in: query
+        name: fiscal_periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of fiscal periods to restrict returned series values (e.g.,
+          2023Q1, 2023Q2). Mutually exclusive with `calendar_periods` and `periods`.
+        examples:
+          RecentQuarters:
+            value:
+            - 2023Q4
+            - 2024Q1
+            summary: Recent quarters
+      - in: query
+        name: include_derived
+        schema:
+          type: boolean
+        description: Whether to include derived series. `true` = include derived series,
+          `false` = exclude derived series, omit for default behavior (excludes derived).
+        examples:
+          IncludeDerived:
+            value: true
+            summary: Include Derived
+          ExcludeDerived:
+            value: false
+            summary: Exclude Derived
+      - in: query
+        name: keywords
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of keywords to filter series (max 15)
+        examples:
+          Revenue:
+            value:
+            - revenue
+            - sales
+            - income
+          Balance:
+            value:
+            - assets
+            - liabilities
+            - equity
+      - in: query
+        name: periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Deprecated: use `calendar_periods`. List of calendar periods
+          (e.g., 2023Q1, 2023Q2).'
+        deprecated: true
+        examples:
+          RecentQuarters:
+            value:
+            - 2023Q4
+            - 2024Q1
+            summary: Recent quarters
+      tags:
+      - Series
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanySeriesResponse'
+              examples:
+                SuccessfulResponse:
+                  value:
+                  - - id: 12345
+                      full_series_name: Income Statement | Net sales | Net product
+                        sales
+                      row_number: 4
+                      hierarchy:
+                      - level: 1
+                        label: Income Statement
+                      - level: 2
+                        label: Net sales
+                      - level: 3
+                        label: Net product sales
+                    - id: 12346
+                      full_series_name: Income Statement | Gross Profit
+                      row_number: 10
+                      hierarchy:
+                      - level: 1
+                        label: Income Statement
+                      - level: 2
+                        label: Gross Profit
+                    - id: 12347
+                      full_series_name: Income Statement | Net Income
+                      row_number: 25
+                      hierarchy:
+                      - level: 1
+                        label: Income Statement
+                      - level: 2
+                        label: Net Income
+                  summary: Successful response
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/bulk-subscribe:
+    post:
+      operationId: bulk_add_data_warehouse_company_subscription
+      description: Add subscriptions to multiple companies for the authenticated user.
+        This operation respects the user's subscription limit and syncs the local
+        database. If the user has Snowflake and/or Databricks permissions, subscriptions
+        are also synced to the corresponding data warehouses. If the number of requested
+        companies exceeds the user's remaining subscription slots, only the first
+        N companies that fit within the limit will be processed; the rest will be
+        returned in 'skipped_limit_exceeded'.
+      summary: Bulk Add Data Warehouse Company Subscriptions
+      tags:
+      - Data Warehouse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCompanySubscriptionQueryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkCompanySubscriptionQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkCompanySubscriptionQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inserted:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs successfully subscribed across all warehouses.
+                  already_existed:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs that already had an entitlement in a
+                      data warehouse.
+                  not_found:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs that do not exist in the data warehouse.
+                  skipped_already_subscribed:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs already subscribed locally before calling
+                      the data warehouse.
+                  skipped_limit_exceeded:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs excluded because the subscription limit
+                      would be exceeded.
+                  warehouses:
+                    type: object
+                    description: Per-warehouse breakdown of results.
+                    additionalProperties:
+                      type: object
+                      properties:
+                        inserted:
+                          type: array
+                          items:
+                            type: integer
+                        already_existed:
+                          type: array
+                          items:
+                            type: integer
+                        not_found:
+                          type: array
+                          items:
+                            type: integer
+                        error:
+                          type: string
+                          nullable: true
+                example:
+                  inserted:
+                  - 101
+                  - 102
+                  already_existed:
+                  - 103
+                  not_found:
+                  - 999
+                  skipped_already_subscribed:
+                  - 104
+                  skipped_limit_exceeded:
+                  - 105
+                  - 106
+                  warehouses:
+                    snowflake:
+                      inserted:
+                      - 101
+                      - 102
+                      already_existed:
+                      - 103
+                      not_found:
+                      - 999
+                      error: null
+                    databricks:
+                      inserted:
+                      - 101
+                      already_existed:
+                      - 102
+                      - 103
+                      not_found:
+                      - 999
+                      error: null
+                description: Bulk subscription result with details per company ID
+                  and per-warehouse breakdown.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    company_ids:
+                    - This field is required.
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters or missing fields.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: API limit of 50 companies exceeded for user@example.com.
+                    Cannot subscribe to more companies.
+                description: Company subscription limit exceeded.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 1 minute.
+                description: Rate limit exceeded (max 120 requests per minute).
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Bulk subscription failed due to internal error.
+                description: Unexpected internal server error during data warehouse
+                  operation.
+          description: ''
+  /api/v3/download-company-model:
+    get:
+      operationId: download_company_model
+      description: Generate a pre-signed URL to download the Excel model file for
+        a specific company
+      summary: Get Company Model Download URL
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company (one of company_id / isin
+          / ticker is required)
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email address to send the download link (optional if handled
+          elsewhere)
+      - in: query
+        name: isin
+        schema:
+          type: string
+        description: ISIN for the target company (alternative identifier)
+      - in: query
+        name: model_type
+        schema:
+          type: string
+        description: Type of model to download (e.g., 'industry' or 'company')
+        required: true
+      - in: query
+        name: ticker
+        schema:
+          type: string
+        description: Ticker symbol for the target company (alternative identifier)
+      tags:
+      - Download
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadURL'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/download-industry-model:
+    get:
+      operationId: download_industry_model
+      description: Generate a pre-signed URL to download the Excel model file for
+        a specific industry model
+      summary: Get Industry Model Download URL
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email address where the download link should be sent
+        required: true
+      - in: query
+        name: model_id
+        schema:
+          type: integer
+        description: The unique identifier of the industry model
+        required: true
+        examples:
+          TechnologyIndustryModel:
+            value: 456
+            summary: Technology Industry Model
+            description: Example industry model ID for technology sector
+      tags:
+      - Download
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadURL'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/industry-company-models:
+    get:
+      operationId: get_company_industry_models
+      description: Retrieve the mapping between companies and their associated industry
+        models, including ISIN identifiers and model metadata.
+      summary: Get Company Industry Model Mappings
+      tags:
+      - Industry Models
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyIndustryModel'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/status:
+    post:
+      operationId: check_company_status
+      description: |-
+        Check the data freshness signals for specified companies. Each company entry in the response distinguishes three timestamps:
+
+        - `latest_datapoint_created_at`: when the latest publish notification for the company was created. Falls back to the company's live Excel model `created_at` when no active non-clientview notification exists.
+        - `latest_datapoint_updated_at`: the latest data change for the company, computed as the max of the most recent DELETE event in FundamentalEventLog and the most recent incremental-update error in FundamentalErrors.
+        - `model_updated_at`: when the company's Excel model was last touched.
+      summary: Check Company Model Status
+      tags:
+      - Companies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusQueryRequest'
+            examples:
+              CheckMultipleCompanies:
+                value:
+                  companies:
+                  - 1234
+                  - 5678
+                  - 9012
+                summary: Check Multiple Companies
+                description: Check status for multiple companies
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyStatus'
+              examples:
+                CheckMultipleCompanies:
+                  value:
+                  - companies:
+                    - 1234
+                    - 5678
+                    - 9012
+                  summary: Check Multiple Companies
+                  description: Check status for multiple companies
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/fundamentals/series:
+    get:
+      operationId: get_fundamentals_series
+      description: Look up series and company context for up to 100 fundamental IDs.
+        IDs not in the dataset visible to the user are silently omitted from the response.
+      summary: Get Fundamental Series
+      parameters:
+      - in: query
+        name: ids
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 100
+        description: List of fundamental IDs to look up (max 100)
+        required: true
+      tags:
+      - Fundamentals
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      series_id:
+                        type: integer
+                      full_series_name:
+                        type: string
+                      category:
+                        type: string
+                      label:
+                        type: string
+                      company_id:
+                        type: integer
+                      company_name:
+                        type: string
+                      company_ticker:
+                        type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/fundamental-updates:
+    get:
+      operationId: get_fundamental_updates
+      description: Retrieve updates and changes to fundamental financial data for
+        a specific company since a given timestamp.
+      summary: Get Fundamental Data Updates
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return the results
+      - in: query
+        name: since
+        schema:
+          type: string
+          format: date-time
+        description: Timestamp to get updates since (ISO 8601 format)
+        examples:
+          RecentUpdates:
+            value: '2024-01-01T00:00:00Z'
+            summary: Recent Updates
+            description: Get all updates since the beginning of 2024
+      tags:
+      - Fundamentals
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFundamentalUpdatesList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/investing-skills:
+    get:
+      operationId: list_investing_skills
+      description: Retrieve the catalog of available investing skills — reusable,
+        model-initiated analytical workflows (earnings review, DCF, comps, etc.).
+        Results can optionally be filtered by category.
+      summary: List Investing Skills
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - analysis
+          - deliverable
+          - valuation
+        description: Optional category to filter investing skills by. When omitted,
+          skills across all categories are returned.
+        examples:
+          AnalysisSkills:
+            value: analysis
+            summary: Analysis skills
+            description: Return only skills in the analysis category.
+      tags:
+      - Investing Skills
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvestingSkillList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/investing-skills/{investing_skill_name}:
+    get:
+      operationId: retrieve_investing_skill
+      description: Retrieve a single investing skill by its unique name, including
+        its full prompt content, declared inputs, and required tools.
+      summary: Retrieve Investing Skill
+      parameters:
+      - in: path
+        name: investing_skill_name
+        schema:
+          type: string
+        description: The unique name of the investing skill (e.g. 'earnings', 'dcf').
+        required: true
+        examples:
+          EarningsReview:
+            value: earnings
+            summary: Earnings Review
+            description: Example skill name for an earnings review workflow.
+      tags:
+      - Investing Skills
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestingSkillDetail'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/documents/{document_id}:
+    get:
+      operationId: retrieve_document
+      description: Retrieve a specific document by its ID. Returns a signed URL for
+        document access with expiration timestamp.
+      summary: Retrieve Document
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: integer
+        description: The unique identifier of the document to retrieve.
+        required: true
+        examples:
+          DocumentID:
+            value: 12345
+            summary: Document ID
+            description: Example document ID
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentRetrievalResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/v3/documents/{document_id}/metadata:
+    get:
+      operationId: retrieve_document_metadata
+      description: 'Return structural metadata for a document: filing type, source
+        document type, total character count, named sections with character counts,
+        and a recommended_call hint that guides whether to fetch the whole document
+        or a specific section next. The endpoint never returns the document body.
+        Documents whose filing type is outside the allowlist return 200 with recommended_call
+        set to not_supported and reason populated. Earnings call transcripts are excluded
+        from whole-document access and return 403; use /documents/keyword-search to
+        query transcript content.'
+      summary: Retrieve Document Metadata
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: integer
+        description: The unique identifier of the document.
+        required: true
+        examples:
+          DocumentID:
+            value: 12345
+            summary: Document ID
+            description: Example document ID
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentMetadataResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/v3/documents/{document_id}/content:
+    get:
+      operationId: retrieve_document_content
+      description: Return the processed flat text of a supported document (10-K, 10-Q,
+        8-K, News Article, Others). The response is a flat shape with no pagination
+        and no section list; callers that need the section list or the recommended_call
+        hint use the /metadata endpoint, and callers that need the original document
+        file use GET /api/v2/documents/{id}. By default the response is capped at
+        max_characters (100000) and truncated=true is set when the cap is hit. Pass
+        full_content=true to bypass the cap. Filing types outside the allowlist return
+        400 with a reason; an unknown section name returns 400 with the available_sections
+        list so the caller can recover. Earnings call transcripts are excluded from
+        whole-document access and return 403; use /documents/keyword-search to query
+        transcript content.
+      summary: Retrieve Document Content
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: integer
+        description: The unique identifier of the document.
+        required: true
+        examples:
+          DocumentID:
+            value: 12345
+            summary: Document ID
+            description: Example document ID
+      - in: query
+        name: full_content
+        schema:
+          type: boolean
+        description: When true, max_characters is ignored and the full text (or full
+          section) is returned with truncated=false.
+      - in: query
+        name: max_characters
+        schema:
+          type: integer
+        description: Cap on returned characters. Defaults to 100000. Hard ceiling
+          is 1000000; values above the ceiling are rejected. When the resolved text
+          is longer than max_characters, the first max_characters are returned and
+          truncated is set to true.
+      - in: query
+        name: section
+        schema:
+          type: string
+        description: Optional section name from the document's section index. When
+          provided, only that section's text is returned. Use GET /api/v2/documents/{id}/metadata
+          to discover valid section names.
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentContentResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  reason:
+                    type: string
+                  available_sections:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/v3/consumption:
+    get:
+      operationId: get_datapoint_consumption
+      description: |-
+        Return the user's datapoint consumption within a date window and the user's effective monthly datapoint limit.
+
+        **Inputs**
+        - `start_at` and `end_at` are both dates (in format `YYYY-MM-DD`).
+        - Internally, `start_at` is expanded to the start of the day of that date in the current Django timezone; `end_at` is expanded to the end of the day of that date in the current Django timezone.
+
+        **Defaults**
+        - If `start_at` is omitted, it defaults to the first day of the current month at 00:00:00 (current timezone).
+        - If `end_at` is omitted, it defaults to now (the current datetime in the current timezone).
+
+        **Behavior**
+        - The window is inclusive: `start_at ≤ timestamp ≤ end_at`.
+
+        **Response**
+        - `monthly_limit` (string): `'Unlimited'` if there is no limit for the user, the numeric limit as a string otherwise.
+        - `consumption` (integer): total datapoints accessed in the window.
+        - `initial_date` / `final_date` (date): the date components of the resolved `start_at` and `end_at` values for the windows
+      summary: Get Datapoint Consumption by date range
+      parameters:
+      - in: query
+        name: end_at
+        schema:
+          type: string
+          format: date
+        description: End date (YYYY-MM-DD) of the inclusive window. Defaults to today's
+          date (and current time) if omitted.
+        examples:
+          WindowEnd:
+            value: '2025-06-30'
+            summary: Window End
+            description: Stop counting at June 30, 2025, at the end of the day.
+      - in: query
+        name: start_at
+        schema:
+          type: string
+          format: date
+        description: Start date (YYYY-MM-DD) of the inclusive window. Defaults to
+          the first day of the current month if omitted.
+        examples:
+          WindowStart:
+            value: '2025-06-01'
+            summary: Window Start
+            description: Begin counting from June 1, 2025, at the start of the day.
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumption'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/consumption/events:
+    get:
+      operationId: list_datapoint_access_events
+      description: |-
+        Return the individual datapoint access events for the authenticated user within a date window.
+
+        **Inputs**
+        - `start_at` and `end_at` are **dates** (`YYYY-MM-DD`).
+        - Internally, `start_at` expands to the start of that day in the current Django timezone; `end_at` expands to the end of that day in the current Django timezone.
+
+        **Defaults**
+        - If `start_at` is omitted, it defaults to the **first day of the current month** at 00:00:00 (current timezone).
+        - If `end_at` is omitted, it defaults to **now** (current datetime in the current timezone).
+
+        **Behavior**
+        - The window is **inclusive**: `start_at ≤ timestamp ≤ end_at`.
+        - Results are ordered by `timestamp` ascending.
+
+        **Response**
+        - A paginated list of datapoint access events.
+      summary: List Datapoint Access Events by date range
+      parameters:
+      - in: query
+        name: end_at
+        schema:
+          type: string
+          format: date
+        description: End date (YYYY-MM-DD) of the inclusive window. Defaults to today's
+          date (and current time) if omitted.
+        examples:
+          WindowEnd:
+            value: '2025-06-30'
+            summary: Window End
+            description: Include events through June 30, 2025 (end of day, current
+              timezone).
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: start_at
+        schema:
+          type: string
+          format: date
+        description: Start date (YYYY-MM-DD) of the inclusive window. Defaults to
+          the first day of the current month if omitted.
+        examples:
+          WindowStart:
+            value: '2025-06-01'
+            summary: Window Start
+            description: Begin listing events from June 1, 2025 (start of day, current
+              timezone).
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConsumptionEventList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/consumption/companies:
+    get:
+      operationId: list_accessed_companies
+      description: |-
+        Return the companies the authenticated user has previously pulled data from.
+
+        **Behavior**
+        - Returns one entry per company the user has accessed.
+        - Results are ordered by `company_id` ascending.
+
+        **Response**
+        - A paginated list of accessed companies.
+        - Each record exposes `company_id`, `company_name` and `ticker` of the company, plus `first_accessed_at` (the first time the user accessed it).
+      summary: List companies accessed by the user
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAccessedCompanyList'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/consumption/series-access:
+    get:
+      operationId: get_series_consumption
+      description: |-
+        Return the series consumption data for the authenticated user for a given company.
+
+        **Inputs**
+        - `company_id` is **required** (integer).
+
+        **Response**
+        - The user's current series-per-company limit.
+        - The number of unique series the user has accessed for the company.
+        - A list of accessed series with their IDs and names.
+      summary: Get series consumption for a company
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The company ID to query series consumption for.
+        required: true
+        examples:
+          CompanyID:
+            value: 123
+            summary: Company ID
+            description: Query series consumption for company 123.
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesConsumption'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/{company_id}/stock-prices:
+    get:
+      operationId: get_company_market_data
+      description: Retrieve paginated daily OHLCV (Open, High, Low, Close, Volume)
+        stock price data for a specific company.
+      summary: Get Company Stock Prices
+      parameters:
+      - in: query
+        name: adjusted
+        schema:
+          type: boolean
+        description: 'Return adjusted prices when `true`; raw prices when `false`.
+          Defaults to `false`. Adjusted prices restate history onto today''s per-share
+          scale (the forward-adjustment convention): OHLC are multiplied by the cumulative
+          factor of every stock split, cash dividend (including specials), and the
+          price effect of spinoffs and distributions with an ex-date after the row''s
+          date. Volume is adjusted only for share-count-changing splits and rounded
+          to whole shares. Not provided: valuation of spun-off entities and reconstructed
+          total-return series.'
+        examples:
+          AdjustedPrices:
+            value: true
+            summary: Adjusted Prices
+          RawPrices:
+            value: false
+            summary: Raw Prices
+      - in: path
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: dates
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+        description: Specific dates to retrieve data for, passed as repeated keys
+          (`?dates=2024-01-02&dates=2024-01-03`), up to 100 per request. Mutually
+          exclusive with `start_date`/`end_date`; one of `dates` or `start_date` is
+          required.
+        explode: true
+        examples:
+          TwoSpecificDates:
+            value:
+            - '2024-01-02'
+            - '2024-01-03'
+            summary: Two specific dates
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: End date of the desired market data window (YYYY-MM-DD).
+        examples:
+          EndOf2024:
+            value: '2024-12-31'
+            summary: End of 2024
+            description: Retrieve data up to the end of 2024.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Start date of the desired market data window (YYYY-MM-DD). Required
+          unless `dates` is provided.
+        examples:
+          StartOf2024:
+            value: '2024-01-01'
+            summary: Start of 2024
+            description: Retrieve data from the start of 2024.
+      tags:
+      - Market Data
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMarketDataList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/{company_id}/adjustment-factors:
+    get:
+      operationId: get_company_adjustment_factors
+      description: 'Retrieve paginated corporate-action adjustment factors for a specific
+        company, ordered by ex-date. These are the same factors behind `adjusted=true`
+        on the stock prices endpoint: to adjust a historical price, multiply it by
+        every factor whose `ex_date` falls strictly after the price''s date (a factor
+        no longer applies on its own ex-date). Volume is adjusted only by `split`
+        factors. Rows with `factor_type` `other` are informational and are not applied
+        to adjusted prices.'
+      summary: Get Company Stock Price Adjustment Factors
+      parameters:
+      - in: path
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: End ex-date of the desired factor window (YYYY-MM-DD, inclusive).
+        examples:
+          EndOf2024:
+            value: '2024-12-31'
+            summary: End of 2024
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Start ex-date of the desired factor window (YYYY-MM-DD, inclusive).
+        examples:
+          StartOf2024:
+            value: '2024-01-01'
+            summary: Start of 2024
+      tags:
+      - Market Data
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdjustmentFactorsList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/snowflake/company-subscription:
+    post:
+      operationId: add_snowflake_company_subscription
+      description: Add a subscription to a company for the authenticated user. This
+        operation updates both Snowflake and the local database.
+      summary: Add Snowflake Company Subscription
+      tags:
+      - Snowflake
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Subscription successfully added or already exists.
+                description: Subscription successfully added or already existed.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    company_id:
+                    - This field is required.
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters or missing fields.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: API limit of 50 companies exceeded for user@example.com.
+                    Cannot subscribe to company 1234.
+                description: Company limit exceeded.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 1 minute.
+                description: Rate limit exceeded (max 120 requests per minute).
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Snowflake subscription failed due to internal error.
+                description: Unexpected internal server error during Snowflake operation.
+          description: ''
+  /api/v3/databricks/company-subscription:
+    post:
+      operationId: add_databricks_company_subscription
+      description: Add a subscription to a company for the authenticated user. This
+        operation updates both Databricks and the local database.
+      summary: Add Databricks Company Subscription
+      tags:
+      - Databricks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Subscription successfully added or already exists.
+                description: Subscription successfully added or already existed.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    company_id:
+                    - This field is required.
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters or missing fields.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: API limit of 50 companies exceeded for user@example.com.
+                    Cannot subscribe to company 1234.
+                description: Company limit exceeded.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 1 minute.
+                description: Rate limit exceeded (max 120 requests per minute).
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Databricks subscription failed due to internal error.
+                description: Unexpected internal server error during Databricks operation.
+          description: ''
+  /api/v3/webhooks:
+    get:
+      operationId: list_webhooks
+      description: List all webhooks belonging to the authenticated user's API key.
+        Supports optional filtering by event_type, active, and is_test query parameters.
+      summary: List Webhooks
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+        description: Filter by active status.
+      - in: query
+        name: event_type
+        schema:
+          type: string
+        description: Filter by event type.
+      - in: query
+        name: is_test
+        schema:
+          type: boolean
+        description: Filter by test flag.
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWebhookFullReadList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    post:
+      operationId: create_webhook
+      description: Register a new webhook for a given event type. Auth secrets are
+        encrypted before storage. Limited to 10 webhooks per API key.
+      summary: Create Webhook
+      tags:
+      - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+            examples:
+              CreateWithAuthentication:
+                value:
+                  url: https://example.com/webhook
+                  event_type: clientview_updated
+                  header_name: Authorization
+                  prefix: Bearer
+                  auth_secret: your-secret-token
+                  is_test: false
+                summary: Create with authentication
+                description: Create a webhook with custom auth header
+              CreateWithMinimalFields:
+                value:
+                  url: https://example.com/webhook
+                  event_type: incremental_update
+                  is_test: false
+                summary: Create with minimal fields
+                description: Create a webhook with only the required fields
+              CreateADocumentAddedWebhook:
+                value:
+                  url: https://example.com/webhook
+                  event_type: document_added
+                  is_test: false
+                summary: Create a document_added webhook
+                description: Subscribe to notifications when a new document is added
+                  for a followed company
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookFullRead'
+              examples:
+                CreateWithAuthentication:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: clientview_updated
+                    header_name: Authorization
+                    prefix: Bearer
+                    auth_secret: your-secret-token
+                    is_test: false
+                  summary: Create with authentication
+                  description: Create a webhook with custom auth header
+                CreateWithMinimalFields:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: incremental_update
+                    is_test: false
+                  summary: Create with minimal fields
+                  description: Create a webhook with only the required fields
+                CreateADocumentAddedWebhook:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: document_added
+                    is_test: false
+                  summary: Create a document_added webhook
+                  description: Subscribe to notifications when a new document is added
+                    for a followed company
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/{id}:
+    get:
+      operationId: retrieve_webhook
+      description: Retrieve a single webhook by ID. The webhook must belong to the
+        authenticated user's API key.
+      summary: Retrieve Webhook
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookFullRead'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    patch:
+      operationId: update_webhook
+      description: Update an existing webhook's configuration. All fields are optional;
+        only the provided fields will be modified.
+      summary: Update Webhook
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWebhookUpdateRequest'
+            examples:
+              UpdateWebhookURL:
+                value:
+                  url: https://example.com/new-webhook-endpoint
+                summary: Update webhook URL
+                description: Change the target URL of an existing webhook
+              UpdateMultipleFields:
+                value:
+                  url: https://example.com/webhook
+                  event_type: clientview_updated
+                  is_test: false
+                  active: true
+                  header_name: Authorization
+                  prefix: Bearer
+                  auth_secret: new-secret-token
+                summary: Update multiple fields
+                description: Update several webhook fields at once
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWebhookUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWebhookUpdateRequest'
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookFullRead'
+              examples:
+                UpdateWebhookURL:
+                  value:
+                    url: https://example.com/new-webhook-endpoint
+                  summary: Update webhook URL
+                  description: Change the target URL of an existing webhook
+                UpdateMultipleFields:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: clientview_updated
+                    is_test: false
+                    active: true
+                    header_name: Authorization
+                    prefix: Bearer
+                    auth_secret: new-secret-token
+                  summary: Update multiple fields
+                  description: Update several webhook fields at once
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    delete:
+      operationId: delete_webhook
+      description: Permanently delete an existing webhook. The webhook must belong
+        to the authenticated user's API key.
+      summary: Delete Webhook
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/event-types:
+    get:
+      operationId: list_webhook_types
+      description: Returns the available webhook event types. Use this endpoint to
+        discover which event types can be used when configuring or testing webhooks.
+      summary: List Webhook Event Types
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookEventType'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/{webhook_id}/sample-payload:
+    get:
+      operationId: get_webhook_sample_payload
+      description: 'Returns a sample payload matching the webhook''s configured event
+        type. The payload uses static example data and includes ''test'': true. Fundamental
+        events (clientview_updated, incremental_update, series_updated) carry a ''series''
+        field; document_added carries a ''document'' object instead. Only the webhook
+        owner can access this endpoint.'
+      summary: Get Sample Payload for Webhook
+      parameters:
+      - in: path
+        name: webhook_id
+        schema:
+          type: integer
+        description: The ID of the webhook
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  test:
+                    type: boolean
+                  event_type:
+                    type: string
+                  company_id:
+                    type: integer
+                  series:
+                    type: object
+                    description: Present for fundamental events.
+                  document:
+                    type: object
+                    description: Present for document_added events. Carries the document's
+                      raw filing_type and document_type exactly as returned by GET
+                      /documents (no normalization).
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/{webhook_id}/test:
+    post:
+      operationId: test_webhook_delivery
+      description: 'Triggers a synchronous test delivery to the webhook''s configured
+        URL using a sample payload with ''test'': true. Returns immediate feedback
+        including the HTTP status code, response body (truncated to 2000 chars), and
+        round-trip duration in milliseconds. Only the webhook owner can trigger a
+        test delivery. Uses a 10-second timeout.'
+      summary: Test Webhook Delivery
+      parameters:
+      - in: path
+        name: webhook_id
+        schema:
+          type: integer
+        description: The ID of the webhook to test
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status_code:
+                    type: integer
+                    nullable: true
+                  response_body:
+                    type: string
+                  duration_ms:
+                    type: integer
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/deliveries:
+    get:
+      operationId: list_webhook_deliveries
+      description: 'Returns delivery history in reverse chronological order. Each
+        entry includes the timestamp, event type, company ID, response status, response
+        body (truncated to 1000 characters), test flag, and round-trip duration in
+        milliseconds. Supports standard DRF limit/offset pagination (default page
+        size: 500, max: 500). Optionally filter by webhook_id and/or is_test. Only
+        deliveries for webhooks owned by the authenticated user are returned.'
+      summary: List Webhook Delivery History
+      parameters:
+      - in: query
+        name: is_test
+        schema:
+          type: boolean
+        description: Filter by test (true) or production (false) deliveries
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of deliveries to return (default 500, max 500)
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of deliveries to skip for pagination
+      - in: query
+        name: webhook_id
+        schema:
+          type: integer
+        description: Filter deliveries to a specific webhook (optional)
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - count
+                - results
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?offset=400&limit=100
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: http://api.example.org/accounts/?offset=200&limit=100
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        count:
+                          type: integer
+                        next:
+                          type: string
+                          format: uri
+                          nullable: true
+                        previous:
+                          type: string
+                          format: uri
+                          nullable: true
+                        results:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              timestamp:
+                                type: string
+                                format: date-time
+                              event_type:
+                                type: string
+                              company_id:
+                                type: integer
+                              response_status:
+                                type: integer
+                                nullable: true
+                              response_body:
+                                type: string
+                                nullable: true
+                              is_test:
+                                type: boolean
+                              duration_ms:
+                                type: integer
+                                nullable: true
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/partnerships/user:
+    post:
+      operationId: create_partnership_user
+      description: Create a partnership pre-account for the given email under the
+        authenticated API key's partnership program. A sign-up email is sent to the
+        user with a link to complete account creation. The pre-account expires 30
+        days after creation. The monthly datapoint limit is determined by the chosen
+        plan (BASE or PLUS).
+      summary: Create Partnership User
+      tags:
+      - Partnership
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnershipUserCreationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PartnershipUserCreationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PartnershipUserCreationRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    format: email
+                    description: Email of the created partnership user.
+                  plan:
+                    type: string
+                    enum:
+                    - BASE
+                    - PLUS
+                    description: Plan assigned to the partnership user.
+                  expires_at:
+                    type: string
+                    format: date-time
+                    description: ISO 8601 timestamp when the pre-account expires.
+                example:
+                  email: user@example.com
+                  plan: PLUS
+                  expires_at: '2026-06-06T12:00:00+00:00'
+                description: Partnership user successfully created.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    detail: A user with this email already exists
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters, or a user/pre-account with
+                  the given email already exists.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error: Partnership user limit of 10000 exceeded for this API key.
+                  status_code: 403
+                  message: Permission denied
+                description: Partnership user limit exceeded for this API key.
+          description: ''
+components:
+  schemas:
+    AccessedCompany:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the user has accessed
+        company_name:
+          type: string
+          nullable: true
+          description: Name of the company
+        ticker:
+          type: string
+          nullable: true
+          description: Ticker symbol of the company
+        first_accessed_at:
+          type: string
+          format: date-time
+          description: Timestamp of the first time the user accessed the company
+      required:
+      - company_id
+      - company_name
+      - first_accessed_at
+      - ticker
+    AccessedSeries:
+      type: object
+      properties:
+        series_id:
+          type: integer
+          readOnly: true
+        full_series_name:
+          type: string
+          readOnly: true
+      required:
+      - full_series_name
+      - series_id
+    AdjustmentFactors:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ex_date:
+          type: string
+          format: date
+          description: Date the adjustment takes effect; the factor applies to prices
+            strictly before this date
+        factor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          description: Multiplier for historical prices before the ex date
+        factor_type:
+          allOf:
+          - $ref: '#/components/schemas/FactorTypeEnum'
+          description: |-
+            One of split, cash_dividend, spin_off, or other
+
+            * `split` - Split
+            * `cash_dividend` - Cash Dividend
+            * `spin_off` - Spin Off
+            * `other` - Other
+        event:
+          type: string
+          description: Corporate action event code (e.g. SD, DIV, DMRGR)
+          maxLength: 32
+        detail:
+          type: string
+          description: Human-readable description of the corporate action
+          maxLength: 1024
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - event
+      - ex_date
+      - factor
+      - factor_type
+      - id
+      - updated_at
+    BatchSearchFiltersSerializerV3Request:
+      type: object
+      description: |-
+        V3 batch-search filters.
+
+        Same shape as :class:`BatchSearchFiltersSerializer` but without the deprecated
+        ``periods`` field (and thus no ``LegacyFieldAliasMixin``). Kept as a standalone
+        class so it is trivial to delete once v2 is sunset.
+      properties:
+        company_ids:
+          type: array
+          items:
+            type: integer
+          description: List of company IDs to filter by
+        document_ids:
+          type: array
+          items:
+            type: integer
+          description: List of document IDs to filter by
+        filing_types:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: List of filing types to filter by (e.g., '10-K', '10-Q')
+        date_range:
+          type: object
+          additionalProperties: {}
+          description: Date range filter with 'start' and 'end' keys (YYYY-MM-DD format)
+        calendar_quarters:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: One or more calendar quarters in YYYYQ# format. Mutually exclusive
+            with `fiscal_quarters`.
+        fiscal_quarters:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: One or more fiscal quarters in YYYYQ# format. Translated to
+            each company's calendar quarters before filtering, so `company_ids` is
+            required. Mutually exclusive with `calendar_quarters`.
+    BatchSearchOptionsRequest:
+      type: object
+      description: Serializer for batch search options.
+      properties:
+        size:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          description: Maximum number of documents to return per page (1-100)
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: 'Number of documents to skip for pagination (default: 0)'
+        operator:
+          allOf:
+          - $ref: '#/components/schemas/OperatorEnum'
+          default: OR
+          description: |-
+            Search operator - 'AND' requires all keywords, 'OR' requires any keyword
+
+            * `AND` - AND
+            * `OR` - OR
+        fuzzy:
+          type: boolean
+          default: false
+          description: 'Enable fuzzy matching (default: False). When False, only exact
+            phrase matches are returned. When True, allows approximate matches but
+            positional information may be unavailable.'
+    BatchSearchRequestSerializerV3Request:
+      type: object
+      description: |-
+        V3 batch-search request.
+
+        Same shape as :class:`BatchSearchRequestSerializer` but nests the v3 filters
+        serializer, which drops the deprecated ``periods`` field.
+      properties:
+        keywords:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: List of keywords to search for (1-10 keywords)
+          maxItems: 10
+          minItems: 1
+        filters:
+          allOf:
+          - $ref: '#/components/schemas/BatchSearchFiltersSerializerV3Request'
+          description: Optional filters for document selection
+        options:
+          allOf:
+          - $ref: '#/components/schemas/BatchSearchOptionsRequest'
+          description: Optional search options
+      required:
+      - keywords
+    BulkCompanySubscriptionQueryRequest:
+      type: object
+      properties:
+        company_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - company_ids
+    Company:
+      type: object
+      description: Company serializer with industry, sector and companyidentifier_set
+        as additional fields.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: Unique identifier for the company
+        name:
+          type: string
+          nullable: true
+          description: Registered name of the company
+          maxLength: 255
+        ticker:
+          type: string
+          nullable: true
+          description: Primary ticker symbol used to identify the company
+          maxLength: 255
+        industry_:
+          type: string
+          nullable: true
+          readOnly: true
+          title: 'Industry '
+          description: Name of the industry the company belongs to
+        sector_:
+          type: string
+          nullable: true
+          readOnly: true
+          title: 'Sector '
+          description: Name of the sector the company belongs to
+        actively_maintained:
+          type: boolean
+        companyidentifier_set:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyIdentifier'
+          readOnly: true
+          description: Alternate identifiers associated with the company (e.g., ISIN,
+            CIK)
+        model_updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the company's model was last updated
+        earliest_calendar_quarter:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Earliest calendar quarter available in the company's model
+        latest_calendar_quarter:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Most recent calendar quarter available in the company's model
+        earliest_fiscal_quarter:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Earliest fiscal quarter available in the company's model
+        latest_fiscal_quarter:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Most recent fiscal quarter available in the company's model
+      required:
+      - companyidentifier_set
+      - earliest_calendar_quarter
+      - earliest_fiscal_quarter
+      - id
+      - industry_
+      - latest_calendar_quarter
+      - latest_fiscal_quarter
+      - model_updated_at
+      - sector_
+    CompanyIdentifier:
+      type: object
+      properties:
+        identifier_type:
+          allOf:
+          - $ref: '#/components/schemas/IdentifierTypeEnum'
+          description: |-
+            Type of identifier (e.g., ISIN, CIK, ticker)
+
+            * `CIK` - Identifier used by SEC
+            * `ISIN` - International Securities Identification Number
+            * `CUSIP` - US and Canada
+            * `SEDOL` - UK and Ireland
+            * `FIGI` - Bloomberg
+            * `PRIVATE` - private company data with public identifiers
+            * `CompanyHouseId` - company house identifier
+            * `CapIQCompanyId` - CapIQ Company identifier
+            * `CapIQCompanyTicker` - CapIQ Company Ticker
+            * `ASXCode` - Australian Securities Exchange Company Identifier
+        identifier_value:
+          type: string
+          nullable: true
+          description: Identifier value corresponding to the identifier type
+          maxLength: 255
+      required:
+      - identifier_type
+    CompanyIndustryModel:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier for the company associated with the industry models
+        isin:
+          type: string
+          description: ISIN assigned to the company associated with the industry models
+        industry_models:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndustryModel'
+          description: Collection of industry models available for the company
+      required:
+      - company_id
+      - industry_models
+      - isin
+    CompanySeriesResponse:
+      type: object
+      description: |-
+        Serializer for the response of CompanySeriesService.get_company_series method.
+        Represents a single series item from the company's Excel model.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the series/excel tag
+        full_series_name:
+          type: string
+          description: Full descriptive name of the financial series (e.g., 'Total
+            Revenue', 'Net Income')
+        row_number:
+          type: string
+          nullable: true
+          description: Row position of the series in the source Excel model
+        hierarchy:
+          type: array
+          items:
+            $ref: '#/components/schemas/HierarchyLevel'
+          readOnly: true
+          description: Structured breakdown of the series name into hierarchical levels
+      required:
+      - full_series_name
+      - hierarchy
+      - id
+      - row_number
+    CompanyStatus:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Unique identifier for the company
+        latest_datapoint_created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the latest publish notification for the company
+            was created. Falls back to the company's live Excel model `created_at`
+            when no active non-clientview notification exists.
+        latest_datapoint_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 'Timestamp of the latest data change for the company: max of
+            the most recent DELETE event in FundamentalEventLog and the most recent
+            incremental-update error in FundamentalErrors. Null if neither exists.'
+        latest_period:
+          type: string
+          nullable: true
+          description: Most recent period for which data exists.
+        model_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the company's Excel model was last touched.
+      required:
+      - company_id
+      - latest_datapoint_created_at
+      - latest_datapoint_updated_at
+      - latest_period
+      - model_updated_at
+    CompanyStatusQueryRequest:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: integer
+          description: List of company ids to check status for
+          maxItems: 500
+      required:
+      - companies
+    CompanySubscriptionQueryRequest:
+      type: object
+      properties:
+        company_id:
+          type: integer
+      required:
+      - company_id
+    Consumption:
+      type: object
+      properties:
+        monthly_limit:
+          type: string
+          description: Monthly datapoint consumption limit for the account
+        consumption:
+          type: integer
+          description: Number of datapoints consumed within the requested window
+        initial_date:
+          type: string
+          format: date
+          description: Start date used to calculate consumption
+        final_date:
+          type: string
+          format: date
+          description: End date used to calculate consumption
+      required:
+      - consumption
+      - final_date
+      - initial_date
+      - monthly_limit
+    ConsumptionEvent:
+      type: object
+      properties:
+        source:
+          type: string
+          readOnly: true
+          description: Origin of the datapoint consumption event
+        number_of_datapoints:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+          description: Number of datapoints consumed in the event
+        user_identifier:
+          type: string
+          readOnly: true
+          description: External identifier for the user who triggered the event
+        timestamp:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the consumption event occurred
+      required:
+      - number_of_datapoints
+      - source
+      - timestamp
+      - user_identifier
+    DocumentContentResponse:
+      type: object
+      description: |-
+        Flat response for GET /api/v2/documents/{id}/content.
+
+        The shape is intentionally narrow: just enough for the caller to use
+        the text. Section-level metadata (the available section list, the
+        recommended_call hint) is the responsibility of the /metadata
+        endpoint; the caller already knows which section it asked for.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        document_type:
+          type: string
+          description: Source document type classification carried alongside filing_type.
+            Useful for disambiguating the broad Others filing bucket (for example
+            Earnings Presentation, Investor Day Presentation, 6-K).
+        filing_type:
+          type: string
+          description: Type of filing (10-K, 10-Q, 8-K, News Article, Others). Transcripts
+            are blocked on this endpoint and return 403; use /documents/keyword-search
+            for transcript content.
+        content:
+          type: string
+          description: Document text. Capped at max_characters unless full_content=true.
+            When section is provided, contains just that section's text.
+        number_of_characters:
+          type: integer
+          description: Number of characters in the returned content.
+        truncated:
+          type: boolean
+          description: True when the resolved text was longer than max_characters
+            and the response was sliced. Always false when full_content=true.
+      required:
+      - content
+      - document_id
+      - document_type
+      - filing_type
+      - number_of_characters
+      - truncated
+    DocumentMetadataResponse:
+      type: object
+      description: |-
+        Serializer for the GET /api/v2/documents/{id}/metadata response.
+
+        Surfaces structural metadata only: document identity, filing type,
+        section breakdown with character counts, and a ``recommended_call``
+        hint that downstream callers (REST /content, get_document_content
+        MCP tool) consume to decide what to retrieve next.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        company_id:
+          type: integer
+          nullable: true
+          description: Id of the company the document belongs to. Resolved from the
+            document's direct company with a fallback to its company identifier for
+            older rows. Callers use it to attribute document access to a company (access
+            control and subscription).
+        title:
+          type: string
+          description: Human-readable document title
+        filing_type:
+          type: string
+          description: Type of filing (10-K, 10-Q, 8-K, News Article, Others). Transcripts
+            are blocked on this endpoint and return 403; use /documents/keyword-search
+            for transcript content.
+        document_type:
+          type: string
+          description: Source document type classification carried alongside filing_type.
+            Useful for disambiguating the broad Others filing bucket (for example
+            Earnings Presentation, Investor Day Presentation, 6-K).
+        total_characters:
+          type: integer
+          description: Total number of characters in the document text. 0 when not_supported.
+        total_sections:
+          type: integer
+          description: Number of named sections in the document. 0 when not_supported.
+        available_sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSection'
+          description: Named sections with character counts. Empty when not_supported.
+        recommended_call:
+          allOf:
+          - $ref: '#/components/schemas/RecommendedCallEnum'
+          description: |-
+            Hint for the next call. small_full and large_with_section apply to 10-K and 10-Q. single_section_filing applies to 8-K, News Article, and Others. not_supported applies to filing types outside the allowlist; Transcript filings reach this endpoint but are blocked with 403 before the service runs.
+
+            * `small_full` - small_full
+            * `large_with_section` - large_with_section
+            * `single_section_filing` - single_section_filing
+            * `not_supported` - not_supported
+        reason:
+          type: string
+          nullable: true
+          description: Populated when recommended_call is not_supported.
+      required:
+      - available_sections
+      - company_id
+      - document_id
+      - document_type
+      - filing_type
+      - recommended_call
+      - title
+      - total_characters
+      - total_sections
+    DocumentMetadataSerializerV3:
+      type: object
+      description: |-
+        V3 document metadata response serializer.
+
+        Same shape as :class:`DocumentMetadataSerializer` but without the deprecated
+        ``period`` output field. Kept as a standalone class so it is trivial to
+        delete once v2 is sunset.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        filing_date:
+          type: string
+          format: date
+          nullable: true
+          description: Date when the filing was reported
+        filing_type:
+          type: string
+          nullable: true
+          description: Type of Filing (e.g., '10-Q', '10-K')
+        document_type:
+          type: string
+          nullable: true
+          description: Document type classification
+        filing_uid:
+          type: string
+          nullable: true
+          description: SEC filing unique identifier
+        calendar_quarter:
+          type: string
+          nullable: true
+          description: Calendar quarter for the document in YYYYQ# format.
+        fiscal_quarter:
+          type: string
+          nullable: true
+          description: Fiscal quarter for the document in YYYYQ# format.
+      required:
+      - calendar_quarter
+      - document_id
+      - document_type
+      - filing_date
+      - filing_type
+      - filing_uid
+      - fiscal_quarter
+    DocumentRetrievalResponse:
+      type: object
+      description: Serializer for document retrieval responses including signed URL.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        signed_url:
+          type: string
+          format: uri
+          description: Signed URL for document access
+        url_expires_at:
+          type: string
+          format: date-time
+          description: URL expiration timestamp
+        file_type:
+          type: string
+          description: Type of the document file
+      required:
+      - document_id
+      - file_type
+      - signed_url
+      - url_expires_at
+    DocumentSection:
+      type: object
+      description: A single named section of a document with its character length.
+      properties:
+        name:
+          type: string
+          description: Display name of the section
+        characters:
+          type: integer
+          description: Number of characters in the section
+      required:
+      - characters
+      - name
+    DownloadURL:
+      type: object
+      properties:
+        download_url:
+          type: string
+          description: Pre-signed URL where the requested model can be downloaded
+      required:
+      - download_url
+    EventTypeEnum:
+      enum:
+      - clientview_updated
+      - incremental_update
+      - series_updated
+      - document_added
+      type: string
+      description: |-
+        * `clientview_updated` - Clientview Updated
+        * `incremental_update` - Incremental Update
+        * `series_updated` - Series Updated
+        * `document_added` - Document Added
+    ExportModelSerializerV3:
+      type: object
+      description: |-
+        V3 export query serializer.
+
+        Same shape as :class:`ExportModelSerializer` but ``output_format`` defaults to
+        ``parquet`` instead of ``csv`` — v3 returns Parquet by default and callers opt
+        into CSV with ``output_format=csv``.
+      properties:
+        real_time:
+          type: boolean
+          default: false
+          description: If True, returns data that is incrementally updated and not
+            yet available in the datasheet. If False, uses the last published snapshot.
+        show_historical_data:
+          type: boolean
+          default: false
+          description: Should be used with real_time=True. If True, returns data available
+            in datasheet plus incrementally updated data. If False, returns just the
+            incrementally updated data.
+        output_format:
+          allOf:
+          - $ref: '#/components/schemas/OutputFormatEnum'
+          default: parquet
+          description: |-
+            Output file format. Either 'csv' or 'parquet'. Defaults to 'parquet'.
+
+            * `csv` - csv
+            * `parquet` - parquet
+    FactorTypeEnum:
+      enum:
+      - split
+      - cash_dividend
+      - spin_off
+      - other
+      type: string
+      description: |-
+        * `split` - Split
+        * `cash_dividend` - Cash Dividend
+        * `spin_off` - Spin Off
+        * `other` - Other
+    Fundamental:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the fundamental datapoint
+        label:
+          type: string
+          description: Display label for the datapoint (e.g., revenue, ebitda)
+        category:
+          type: string
+          description: Category grouping for the datapoint (income, balance sheet,
+            cash flow, etc.)
+        restated:
+          type: boolean
+          description: Indicates whether the value has been restated
+        document_type:
+          type: string
+          description: Type of the source document (e.g., 10-K, 10-Q, EX-99.1, EX-99.2)
+        filing_type:
+          type: string
+          description: Filing type the datapoint originates from (e.g., 10-K, 10-Q)
+        series_id:
+          type: integer
+          description: Identifier of the series associated with this datapoint
+        title:
+          type: string
+          description: Full title of the series as presented in the model
+        value_raw:
+          type: number
+          format: double
+          description: Original reported numeric value before normalization
+        value_normalized:
+          type: number
+          format: double
+          description: Value normalized to the system's standard unit/scale
+        unit:
+          type: string
+          description: Unit of measure for the value (e.g., USD)
+        original_unit:
+          type: string
+          nullable: true
+          description: The unit the value was originally reported in, before any conversion
+        conversion_factor:
+          type: string
+          description: Multiplier applied to convert value_normalized from original_unit
+            to unit. Equals '1' when no conversion was applied.
+        calendar_period:
+          type: string
+          description: Calendar period for the datapoint (YYYYQQ/HH/FY format)
+        fiscal_period:
+          type: string
+          description: Fiscal period for the datapoint (YYYYQQ/HH/FY format)
+        span:
+          type: string
+          description: Time span covered by the datapoint (e.g., Q1, FY, trailing
+            12 months)
+        fiscal_date:
+          type: string
+          format: date
+          description: Fiscal period end date associated with the datapoint
+        document_id:
+          type: integer
+          description: Identifier of the source document for this datapoint
+        filing_date:
+          type: string
+          format: date
+          description: Date when the underlying filing was made public
+        document_released_at:
+          type: string
+          format: date-time
+          description: Timestamp when the source document was released
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the datapoint was first created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the datapoint was last updated
+        derived_components:
+          allOf:
+          - $ref: '#/components/schemas/FundamentalDerivedComponents'
+          nullable: true
+          description: Computation metadata for derived fundamentals (formula and
+            component values). Null for non-derived fundamentals.
+      required:
+      - calendar_period
+      - category
+      - conversion_factor
+      - created_at
+      - document_id
+      - document_released_at
+      - document_type
+      - filing_date
+      - filing_type
+      - fiscal_date
+      - fiscal_period
+      - id
+      - label
+      - original_unit
+      - restated
+      - series_id
+      - span
+      - title
+      - unit
+      - updated_at
+      - value_normalized
+      - value_raw
+    FundamentalDerivedComponent:
+      type: object
+      properties:
+        component:
+          type: string
+        fundamental_id:
+          type: integer
+        value:
+          type: number
+          format: double
+      required:
+      - component
+      - fundamental_id
+      - value
+    FundamentalDerivedComponents:
+      type: object
+      properties:
+        formula:
+          type: string
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundamentalDerivedComponent'
+      required:
+      - components
+      - formula
+    FundamentalUpdates:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the update record
+        type:
+          type: string
+          description: Type of update event (e.g., correction, restatement)
+        period:
+          type: string
+          description: Period associated with the update (YYYYQQ/HH/FY format)
+        run_date:
+          type: string
+          format: date-time
+          description: Timestamp when the update process was executed
+        details:
+          allOf:
+          - $ref: '#/components/schemas/ValueErrorDetails'
+          description: Details describing the change applied to the datapoint
+      required:
+      - details
+      - id
+      - period
+      - run_date
+      - type
+    HierarchyLevel:
+      type: object
+      properties:
+        level:
+          type: integer
+          description: Depth level in the hierarchy (1-based)
+        label:
+          type: string
+          description: Label for this hierarchy level
+      required:
+      - label
+      - level
+    IdentifierTypeEnum:
+      enum:
+      - CIK
+      - ISIN
+      - CUSIP
+      - SEDOL
+      - FIGI
+      - PRIVATE
+      - CompanyHouseId
+      - CapIQCompanyId
+      - CapIQCompanyTicker
+      - ASXCode
+      type: string
+      description: |-
+        * `CIK` - Identifier used by SEC
+        * `ISIN` - International Securities Identification Number
+        * `CUSIP` - US and Canada
+        * `SEDOL` - UK and Ireland
+        * `FIGI` - Bloomberg
+        * `PRIVATE` - private company data with public identifiers
+        * `CompanyHouseId` - company house identifier
+        * `CapIQCompanyId` - CapIQ Company identifier
+        * `CapIQCompanyTicker` - CapIQ Company Ticker
+        * `ASXCode` - Australian Securities Exchange Company Identifier
+    IndustryModel:
+      type: object
+      properties:
+        model_id:
+          type: integer
+          description: Identifier for the published industry model
+        description:
+          type: string
+          description: Short description of the industry model contents
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the industry model was last updated
+      required:
+      - description
+      - model_id
+      - updated_at
+    InvestingSkillDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the investing skill
+        name:
+          type: string
+          description: Stable identifier used in URLs and tool args (e.g. 'earnings',
+            'dcf')
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          description: Human-readable label for the skill (e.g. 'Earnings Review')
+        description:
+          type: string
+          description: One/two-sentence summary of the skill, used for routing
+        content:
+          type: string
+          description: Full markdown prompt body, with placeholders like {ticker}
+            / {tickers}
+        inputs:
+          description: 'Declared input params, e.g. [{"name": "ticker", "type": "string",
+            "required": true}]'
+        required_tools:
+          description: Daloopa MCP tools the skill chains, e.g. ["discover_companies",
+            "get_company_fundamentals"]
+      required:
+      - content
+      - description
+      - id
+      - inputs
+      - name
+      - required_tools
+      - title
+    InvestingSkillList:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the investing skill
+        name:
+          type: string
+          description: Stable identifier used in URLs and tool args (e.g. 'earnings',
+            'dcf')
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          description: Human-readable label for the skill (e.g. 'Earnings Review')
+        description:
+          type: string
+          description: One/two-sentence summary of the skill, used for routing
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the skill was first created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the skill was last updated
+      required:
+      - created_at
+      - description
+      - id
+      - name
+      - title
+      - updated_at
+    LightweightBatchSearchResponse:
+      type: object
+      description: Serializer for lightweight batch search responses without positional
+        information.
+      properties:
+        success:
+          type: boolean
+          description: Whether the search was successful
+        total_hits:
+          type: integer
+          description: Total number of matching documents (accurate based on fuzzy
+            setting)
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/LightweightDocumentMatch'
+          description: List of matching documents with match_ids for current page
+        offset:
+          type: integer
+          description: Current pagination offset
+        limit:
+          type: integer
+          description: Current page size limit
+        error:
+          type: string
+          nullable: true
+          description: Error message if search failed
+      required:
+      - documents
+      - limit
+      - offset
+      - success
+      - total_hits
+    LightweightDocumentMatch:
+      type: object
+      description: Serializer for lightweight document matches without positional
+        information.
+      properties:
+        document_id:
+          type: integer
+          description: Document ID
+        company_id:
+          type: integer
+          nullable: true
+          description: Company ID
+        filing_type:
+          type: string
+          nullable: true
+          description: Filing type
+        affinitized_date:
+          type: string
+          nullable: true
+          description: Affinitized date
+        calendar_quarter:
+          type: string
+          nullable: true
+          description: Calendar quarter for the document (YYYYQ#)
+        fiscal_quarter:
+          type: string
+          nullable: true
+          description: Fiscal quarter for the document (YYYYQ#)
+        document_title:
+          type: string
+          nullable: true
+          description: Document title
+        score:
+          type: number
+          format: double
+          description: Relevance score
+        source_url:
+          type: string
+          description: Link to the document in the viewer. This endpoint does not
+            resolve a page, so the link opens the document at the top.
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/LightweightMatch'
+          description: List of matches in this document, each with its own match_id
+      required:
+      - document_id
+      - matches
+      - score
+    LightweightMatch:
+      type: object
+      description: Serializer for individual lightweight matches.
+      properties:
+        keyword:
+          type: string
+          description: The matched keyword
+        context:
+          type: string
+          description: Context snippet around the match
+        match_id:
+          type: string
+          description: Compact match ID for fetching positional info
+      required:
+      - context
+      - keyword
+      - match_id
+    MarketData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Trading date for the returned datapoint
+        open:
+          type: number
+          format: double
+          description: Opening price on the trading date (currency units)
+        high:
+          type: number
+          format: double
+          description: Highest price reached during the trading date
+        low:
+          type: number
+          format: double
+          description: Lowest price reached during the trading date
+        close:
+          type: number
+          format: double
+          description: Closing price on the trading date (currency units)
+        volume:
+          type: integer
+          description: Total traded volume for the trading date
+        adjusted:
+          type: boolean
+          description: Echo of the request's adjusted flag
+      required:
+      - adjusted
+      - close
+      - date
+      - high
+      - low
+      - open
+      - volume
+    OperatorEnum:
+      enum:
+      - AND
+      - OR
+      type: string
+      description: |-
+        * `AND` - AND
+        * `OR` - OR
+    OutputFormatEnum:
+      enum:
+      - csv
+      - parquet
+      type: string
+      description: |-
+        * `csv` - csv
+        * `parquet` - parquet
+    PaginatedAccessedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedCompany'
+    PaginatedAdjustmentFactorsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdjustmentFactors'
+    PaginatedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+    PaginatedConsumptionEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumptionEvent'
+    PaginatedDocumentMetadataSerializerV3List:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentMetadataSerializerV3'
+    PaginatedFundamentalList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fundamental'
+    PaginatedFundamentalUpdatesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundamentalUpdates'
+    PaginatedMarketDataList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketData'
+    PaginatedTaxonomyIndustryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustry'
+    PaginatedTaxonomyMetricList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyMetric'
+    PaginatedTaxonomySectorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomySector'
+    PaginatedWebhookFullReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookFullRead'
+    PartnershipUserCreationRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        plan:
+          $ref: '#/components/schemas/PlanEnum'
+      required:
+      - email
+      - plan
+    PatchedWebhookUpdateRequest:
+      type: object
+      description: |-
+        Validates the payload for updating an existing webhook (PATCH).
+
+        All fields are optional, but at least one must be provided.
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        active:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+    PlanEnum:
+      enum:
+      - BASE
+      - PLUS
+      type: string
+      description: |-
+        * `BASE` - BASE
+        * `PLUS` - PLUS
+    RecommendedCallEnum:
+      enum:
+      - small_full
+      - large_with_section
+      - single_section_filing
+      - not_supported
+      type: string
+      description: |-
+        * `small_full` - small_full
+        * `large_with_section` - large_with_section
+        * `single_section_filing` - single_section_filing
+        * `not_supported` - not_supported
+    SeriesConsumption:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          readOnly: true
+        current_series_per_company_limit:
+          type: string
+          nullable: true
+          readOnly: true
+        number_of_series_accessed_for_company:
+          type: integer
+          readOnly: true
+        series_accessed:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedSeries'
+          readOnly: true
+      required:
+      - company_id
+      - current_series_per_company_limit
+      - number_of_series_accessed_for_company
+      - series_accessed
+    TaxonomyIndustry:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for the industry
+        name:
+          type: string
+          default: ''
+          description: Display name of the industry using Global Industry Classification
+            Standard (GICS)
+        sector_id:
+          type: integer
+          description: Identifier of the parent sector
+        sector_name:
+          type: string
+          default: ''
+          description: Display name of the parent sector using Global Industry Classification
+            Standard (GICS)
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryCompany'
+          description: Companies that belong to the industry
+      required:
+      - companies
+      - industry_id
+      - sector_id
+    TaxonomyIndustryCompany:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the company within the taxonomy result
+        ticker:
+          type: string
+          description: Ticker symbol for the company within the taxonomy result
+        name:
+          type: string
+          description: Company name displayed in the taxonomy result
+      required:
+      - id
+      - name
+      - ticker
+    TaxonomyIndustryTemplate:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for this template
+        name:
+          type: string
+          description: Display name of the Ops industry on the classification
+        sectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryTemplateSector'
+          description: Ops sectors associated with the industry classification
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryTemplateMetric'
+          description: Active template metric slots for the industry classification
+      required:
+      - industry_id
+      - metrics
+      - name
+      - sectors
+    TaxonomyIndustryTemplateMetric:
+      type: object
+      properties:
+        taxonomy_metric_id:
+          type: integer
+          nullable: true
+          description: Unique identifier of the linked TaxonomyKPI, if any
+        taxonomy_metric_name:
+          type: string
+          nullable: true
+          description: Display name of the linked TaxonomyKPI, if any
+        category:
+          type: string
+          description: Template metric category label (e.g. KPI, Segments)
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryTemplateSeries'
+          description: Company series for this metric within the industry classification
+      required:
+      - category
+      - series
+      - taxonomy_metric_id
+      - taxonomy_metric_name
+    TaxonomyIndustryTemplateSector:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the sector
+        name:
+          type: string
+          description: Display name of the sector using Global Industry Classification
+            Standard (GICS)
+      required:
+      - id
+      - name
+    TaxonomyIndustryTemplateSeries:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the series belongs to
+        company_ticker:
+          type: string
+          description: Ticker symbol of the company the series belongs to
+        api_series_id:
+          type: integer
+          description: Identifier of the series associated with the metric
+        full_series_name:
+          type: string
+          description: Full descriptive name of the series
+      required:
+      - api_series_id
+      - company_id
+      - company_ticker
+      - full_series_name
+    TaxonomyMetric:
+      type: object
+      properties:
+        metric_id:
+          type: integer
+          description: Unique identifier for the taxonomy metric
+        metric_name:
+          type: string
+          default: ''
+          description: Human-readable name of the metric
+        metric_description:
+          type: string
+          default: ''
+          description: Description of what the metric represents
+        global_metric:
+          type: boolean
+          default: false
+          description: Indicates whether the metric is a global metric, meaning all
+            companies should have this metric
+        fallback_metric:
+          type: integer
+          nullable: true
+          description: Alternative metric to query if this metric is unavailable for
+            a company
+        financial_statement_sections:
+          type: array
+          items:
+            type: string
+          description: Financial statement sections where this metric may appear (e.g.
+            Income Statement, Balance Sheet)
+      required:
+      - metric_id
+    TaxonomyMetricData:
+      type: object
+      properties:
+        metric_id:
+          type: integer
+          description: Unique identifier for the taxonomy metric
+        metric_name:
+          type: string
+          default: ''
+          description: Human-readable name of the metric
+        metric_description:
+          type: string
+          default: ''
+          description: Description of what the metric represents
+        global_metric:
+          type: boolean
+          default: false
+          description: Indicates whether the metric is a global metric, meaning all
+            companies should have this metric
+        fallback_metric:
+          type: integer
+          nullable: true
+          description: Alternative metric to query if this metric is unavailable for
+            a company
+        financial_statement_sections:
+          type: array
+          items:
+            type: string
+          description: Financial statement sections where this metric may appear (e.g.
+            Income Statement, Balance Sheet)
+        metric_series:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyMetricSeriesItem'
+          description: Series where the metric appears, grouped by company
+      required:
+      - metric_id
+      - metric_series
+    TaxonomyMetricSeriesItem:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the series belongs to
+        ticker:
+          type: string
+          description: Ticker symbol of the company the series belongs to
+        series_id:
+          type: integer
+          description: Identifier of the series associated with the metric
+        full_series_name:
+          type: string
+          description: Full descriptive name of the series
+        is_fallback_series:
+          type: boolean
+          default: false
+          description: Indicates whether the series is a fallback series for the metric
+      required:
+      - company_id
+      - full_series_name
+      - series_id
+      - ticker
+    TaxonomySector:
+      type: object
+      properties:
+        sector_id:
+          type: integer
+          description: Unique identifier for the sector
+        sector_name:
+          type: string
+          default: ''
+          description: Display name of the sector using Global Industry Classification
+            Standard (GICS)
+        industries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomySectorIndustry'
+          description: Ops industries that belong to the sector
+      required:
+      - industries
+      - sector_id
+    TaxonomySectorIndustry:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for the industry
+        name:
+          type: string
+          description: Display name of the industry using Global Industry Classification
+            Standard (GICS)
+      required:
+      - industry_id
+      - name
+    ValueErrorDetails:
+      type: object
+      properties:
+        field_changed:
+          type: string
+          description: Name of the field that was corrected in the datapoint
+        old_value:
+          type: number
+          format: double
+          description: Value before the correction was applied
+        new_value:
+          type: number
+          format: double
+          description: Value after the correction was applied
+        fundamental_id:
+          type: integer
+          description: Identifier of the affected fundamental datapoint
+        series_id:
+          type: integer
+          description: Identifier of the related series for the datapoint
+      required:
+      - field_changed
+      - fundamental_id
+      - new_value
+      - old_value
+      - series_id
+    WebhookCreateRequest:
+      type: object
+      description: |-
+        Validates the payload for creating a new webhook.
+
+        Required fields: ``url``, ``event_type``, ``is_test``.
+        Optional fields: ``header_name``, ``prefix``, ``auth_secret``.
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+      required:
+      - event_type
+      - is_test
+      - url
+    WebhookEventType:
+      type: object
+      description: Read-only representation of a supported webhook event type.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    WebhookFullRead:
+      type: object
+      description: |-
+        Read-only serializer for webhook responses (list, retrieve, create, update).
+
+        ``masked_auth_secret`` is a pre-computed field stored on the model that
+        exposes only the last 4 characters of the auth secret (e.g. ``"****7890"``).
+        Secrets of 4 or fewer characters are fully masked as ``"****"``. This avoids
+        decrypting the auth secret on every read request.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        event_type:
+          type: string
+        active:
+          type: boolean
+        is_test:
+          type: boolean
+        url:
+          type: string
+          format: uri
+        header_name:
+          type: string
+        prefix:
+          type: string
+        masked_auth_secret:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - active
+      - created_at
+      - event_type
+      - header_name
+      - id
+      - is_test
+      - masked_auth_secret
+      - prefix
+      - url
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format:
+        "Basic base64(email:apiKey)"'
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Companies
+  description: Company Data and Metadata
+- name: Fundamentals
+  description: Financial Fundamentals Data

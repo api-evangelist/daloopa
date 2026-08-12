@@ -1,0 +1,256 @@
+generated: '2026-08-11'
+method: derived
+source: >-
+  openapi/daloopa-api-openapi.yml — 72 named component schemas and the id-reference fields declared across
+  41 operations; enriched from https://docs.daloopa.com/docs/taxonomy and
+  https://docs.daloopa.com/docs/fundamental-uniqueness-restatements
+description: >-
+  Entity-relationship graph for the Daloopa fundamental dataset, derived from the published OpenAPI. The
+  model is a clean four-layer star: COMPANY is the root; SERIES defines what is measured; FUNDAMENTAL is a
+  single measured value at a period; DOCUMENT is the SEC source that value was extracted from. A TAXONOMY
+  layer sits alongside to standardize series across companies, and MARKET DATA hangs off the company for
+  multiple calculations.
+
+schema_count: 72
+
+key_stability:
+  warning: >-
+    The single most important thing an integrator must know about this model. Not all identifiers are
+    durable, and the docs say so explicitly.
+  stable:
+  - key: company_id
+    note: Root identifier, used by every surface including MCP.
+  - key: series_id
+    note: >-
+      Stable since October 2025. Daloopa retired POST /api/v2/series-continuation in v3 precisely because
+      series_id values no longer change and the endpoint that tracked those changes had become useless.
+  - key: document_id
+    note: Stable; also the mandated dedupe key for the document_added webhook.
+  unstable:
+  - key: fundamental_id
+    note: >-
+      NOT STABLE and must not be used as a durable primary key across pulls. Callers must resolve a single
+      canonical value per the restatements guide instead.
+    docs: https://docs.daloopa.com/docs/fundamental-uniqueness-restatements
+
+entities:
+
+- name: Company
+  root: true
+  schema: Company
+  primary_key: company_id
+  alternate_keys: [ticker, isin]
+  key_fields: [company_id, ticker, name, earliest_calendar_quarter, latest_calendar_quarter, latest_fiscal_quarter]
+  note: >-
+    earliest_calendar_quarter / latest_calendar_quarter were renamed in v3 from earliest_quarter /
+    latest_quarter to make the calendar frame explicit. latest_calendar_quarter is the documented anchor
+    for all period math in Daloopa's own published Agent Skills.
+  operations: [companies_list_v3, check_company_status]
+  relationships:
+  - {type: has_many, target: Series, via: company_id}
+  - {type: has_many, target: Fundamental, via: company_id}
+  - {type: has_many, target: Document, via: company_id}
+  - {type: has_many, target: MarketDataPoint, via: company_id}
+  - {type: has_one, target: CompanyStatus, via: company_id}
+  - {type: belongs_to, target: TaxonomyIndustry, via: industry_id}
+  - {type: has_many, target: IndustryModel, via: company_id, through: CompanyIndustryModel}
+
+- name: CompanyStatus
+  schema: CompanyStatus
+  primary_key: company_id
+  key_fields: [latest_datapoint_created_at, latest_datapoint_updated_at, model_updated_at]
+  purpose: Data-freshness signal; the intended cache-invalidation primitive.
+  operations: [check_company_status]
+  relationships:
+  - {type: belongs_to, target: Company, via: company_id}
+
+- name: Series
+  schema: CompanySeriesResponse
+  primary_key: series_id
+  key_fields: [series_id, name, company_id, taxonomy_metric_id]
+  purpose: >-
+    Defines WHAT is measured for a company — a named line item or KPI. The stable spine of the model.
+  operations: [company_series_list, get_fundamentals_series, get_series_consumption]
+  relationships:
+  - {type: belongs_to, target: Company, via: company_id}
+  - {type: has_many, target: Fundamental, via: series_id}
+  - {type: belongs_to, target: TaxonomyMetric, via: taxonomy_metric_id}
+
+- name: Fundamental
+  schema: Fundamental
+  primary_key: fundamental_id
+  primary_key_stable: false
+  natural_key: [series_id, period, restated]
+  key_fields: [fundamental_id, series_id, company_id, document_id, value_raw, value_normalized, calendar_period, fiscal_period, restated]
+  purpose: A single measured VALUE for a series at a period, traceable to its source document.
+  note: >-
+    value_raw is as-reported; value_normalized is unit-normalized and quarterized. They can legitimately
+    differ and the caller must choose deliberately.
+  operations: [get_company_fundamentals_v3, get_fundamental_updates, get_fundamentals_series]
+  relationships:
+  - {type: belongs_to, target: Series, via: series_id}
+  - {type: belongs_to, target: Company, via: company_id}
+  - {type: belongs_to, target: Document, via: document_id}
+  - {type: has_many, target: FundamentalDerivedComponent, via: fundamental_id}
+
+- name: FundamentalDerivedComponent
+  schema: FundamentalDerivedComponent
+  purpose: >-
+    The component parts of a derived fundamental — the audit trail for a computed rather than
+    directly-reported value. Surfaced via the include_derived parameter.
+  relationships:
+  - {type: belongs_to, target: Fundamental, via: fundamental_id}
+
+- name: Document
+  schema: DocumentMetadataSerializerV3
+  primary_key: document_id
+  key_fields: [document_id, company_id, filing_type, document_type, title, filing_date, calendar_quarter, fiscal_quarter]
+  purpose: The SEC filing, transcript, presentation or news article a fundamental was extracted from.
+  note: >-
+    filing_type is the RAW type and is NOT normalized — an amendment arrives as `10-K/A`, not `10-K`.
+    Results carry BOTH calendar_quarter and fiscal_quarter so the caller always knows the frame.
+  operations: [company_document_lookup_v3, retrieve_document, retrieve_document_metadata, retrieve_document_content, opensearch_lightweight_search_v3]
+  relationships:
+  - {type: belongs_to, target: Company, via: company_id}
+  - {type: has_many, target: DocumentSection, via: document_id}
+  - {type: has_many, target: Fundamental, via: document_id}
+  - {type: has_many, target: DocumentMatch, via: document_id}
+
+- name: DocumentSection
+  schema: DocumentSection
+  key_fields: [name, character_count]
+  purpose: >-
+    Named section of a document (e.g. Risk Factors, MD&A) with a character count. Retrieved from the
+    /metadata endpoint alongside a recommended_call hint telling the caller whether to fetch the whole
+    document or one section — the mechanism that keeps a 10-K inside an agent's context window.
+  relationships:
+  - {type: belongs_to, target: Document, via: document_id}
+
+- name: DocumentMatch
+  schema: LightweightDocumentMatch / LightweightMatch
+  primary_key: match_id
+  purpose: >-
+    A keyword-search hit. The lightweight search returns matches WITHOUT positional information for speed;
+    match_id is then exchanged at the positional-info endpoint for precise locations — an explicit
+    two-step search workflow.
+  relationships:
+  - {type: belongs_to, target: Document, via: document_id}
+
+- name: TaxonomyMetric
+  schema: TaxonomyMetric
+  primary_key: metric_id
+  purpose: >-
+    Daloopa's standardized metric definition — the layer that makes a line item comparable ACROSS companies
+    rather than only within one. This is the model's real differentiator.
+  operations: [list_taxonomy_metrics_v3, retrieve_taxonomy_metric_v3]
+  relationships:
+  - {type: has_many, target: Series, via: taxonomy_metric_id}
+  - {type: belongs_to, target: TaxonomyIndustry, via: industry_id}
+
+- name: TaxonomyIndustry
+  primary_key: industry_id
+  purpose: Industry classification (IndustryClassification) grouping member companies.
+  operations: [list_taxonomy_industries, retrieve_taxonomy_industry_template_v3]
+  note: >-
+    Migrating to standardized GICS-based classification; sub-industries were retired in v3.
+  relationships:
+  - {type: belongs_to, target: TaxonomySector, via: sector_id}
+  - {type: has_many, target: Company, via: industry_id}
+  - {type: has_one, target: IndustryTemplate, via: industry_id}
+
+- name: TaxonomySector
+  primary_key: sector_id
+  operations: [list_taxonomy_sectors]
+  relationships:
+  - {type: has_many, target: TaxonomyIndustry, via: sector_id}
+
+- name: IndustryTemplate
+  purpose: >-
+    Industry-specific model template — the active template metrics for an industry and the company series
+    mapped to them. The bridge from standardized taxonomy back to company-specific series.
+  relationships:
+  - {type: belongs_to, target: TaxonomyIndustry, via: industry_id}
+  - {type: has_many, target: TaxonomyMetric, via: metric_id}
+  - {type: has_many, target: Series, via: series_id}
+
+- name: IndustryModel
+  schema: IndustryModel / CompanyIndustryModel
+  primary_key: model_id
+  purpose: Excel industry model and its mapping to companies, carrying ISIN identifiers.
+  operations: [get_company_industry_models, download_industry_model]
+  relationships:
+  - {type: has_many, target: Company, via: company_id, through: CompanyIndustryModel}
+
+- name: MarketDataPoint
+  schema: MarketData
+  purpose: Daily OHLCV price bar for a company.
+  key_fields: [company_id, date, open, high, low, close, volume]
+  operations: [get_company_market_data]
+  relationships:
+  - {type: belongs_to, target: Company, via: company_id}
+  - {type: has_many, target: AdjustmentFactor, via: company_id}
+
+- name: AdjustmentFactor
+  schema: AdjustmentFactors
+  purpose: >-
+    Corporate-action adjustment factors (FactorTypeEnum). Required to build a correct split- and
+    dividend-adjusted price series; without it, multiples computed across a corporate action are wrong.
+  operations: [get_company_adjustment_factors]
+  relationships:
+  - {type: belongs_to, target: Company, via: company_id}
+
+- name: InvestingSkill
+  schema: InvestingSkillList / InvestingSkillDetail
+  primary_key: investing_skill_name
+  key_fields: [name, title, description, category, inputs, required_tools, prompt_content]
+  purpose: >-
+    A reusable, model-initiated analytical workflow (earnings review, DCF, comps, tearsheet). Notable as a
+    first-class API ENTITY — the analysis itself is a retrievable object, not just a docs page.
+  operations: [list_investing_skills, retrieve_investing_skill]
+  also_exposed_via: [MCP list_skills/get_skill, 'open-source SKILL.md files']
+  see: skills/_index.yml
+
+- name: Webhook
+  primary_key: id
+  key_fields: [id, event_type, url, header_name, prefix, auth_secret, active, is_test]
+  scoped_to: API key
+  cardinality_limit: 10 per API key
+  operations: [list_webhooks, create_webhook, retrieve_webhook, update_webhook, delete_webhook]
+  relationships:
+  - {type: has_many, target: WebhookDelivery, via: webhook_id}
+  see: asyncapi/daloopa-webhooks.yml
+
+- name: WebhookDelivery
+  key_fields: [timestamp, event_type, company_id, response_status, response_body, is_test, duration_ms]
+  relationships:
+  - {type: belongs_to, target: Webhook, via: webhook_id}
+  - {type: belongs_to, target: Company, via: company_id}
+
+- name: Consumption
+  schema: Consumption / ConsumptionEvent / AccessedCompany / AccessedSeries
+  scoped_to: authenticated user
+  key_fields: [monthly_limit, consumption, initial_date, final_date]
+  purpose: Datapoint metering against the account's monthly limit.
+  operations: [get_datapoint_consumption, list_datapoint_access_events, get_series_consumption, list_accessed_companies]
+  relationships:
+  - {type: has_many, target: Company, via: company_id, note: 'companies the user has accessed, with first_accessed_at'}
+  - {type: has_many, target: Series, via: series_id, note: 'series accessed per company, against a per-company series cap'}
+
+traversal_notes:
+- >-
+  The canonical read path is discover company -> discover series -> fetch fundamentals, which is exactly
+  what the MCP tool trio (discover_companies, discover_company_series, get_company_fundamentals) encodes.
+  The model and the agent surface agree.
+- >-
+  Every fundamental carries a document_id, so any number can be walked back to the filing it came from.
+  This provenance edge is the product's core claim ("every datapoint hyperlinked to its original source")
+  and it is genuinely present in the data model rather than only in the marketing copy.
+- >-
+  The taxonomy layer is what makes cross-company comparison possible: Series -> TaxonomyMetric ->
+  TaxonomyIndustry lets a caller ask for "the same metric" across peers even though each company reports
+  it under its own line-item name.
+
+cross_links:
+  openapi: openapi/daloopa-api-openapi.yml
+  conventions: conventions/daloopa-conventions.yml
+  crosswalk: mcp/daloopa-tool-crosswalk.yml

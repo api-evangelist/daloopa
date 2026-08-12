@@ -1,0 +1,129 @@
+generated: '2026-08-11'
+method: searched
+source: https://docs.daloopa.com/docs/webhook
+docs:
+  overview: https://docs.daloopa.com/docs/webhook
+  managing: https://docs.daloopa.com/docs/managing-your-webhooks
+  testing: https://docs.daloopa.com/docs/testing-your-webhooks
+asyncapi_published: false
+asyncapi_note: >-
+  Daloopa publishes NO AsyncAPI document. Probed the docs host and the API host; there is no
+  /asyncapi.yaml, no event catalog in machine-readable form, and no schema registry. The webhook contract
+  is prose plus example payloads. This artifact captures that catalog faithfully rather than fabricating
+  an AsyncAPI on the provider's behalf.
+
+description: >-
+  Real-time push notifications for fundamental data changes and newly indexed documents, as an alternative
+  to polling. The webhook surface is genuinely self-service — subscribers create, update, test and inspect
+  their own webhooks through the REST API without going through an account team, which is rare in
+  institutional data vendors.
+
+transport: HTTPS POST
+content_type: application/json
+event_count: 4
+
+events:
+- name: clientview_updated
+  class: fundamental
+  description: Triggered when a new ClientView model is generated for the company.
+  payload_fields: [event_type, company_id, series]
+  series_shape: 'map of SERIES_ID -> {periods: [period]}'
+- name: incremental_update
+  class: fundamental
+  description: Triggered on any new group of datapoints published, either by an analyst or by the autotagger.
+  payload_fields: [event_type, company_id, series]
+  series_shape: 'map of SERIES_ID -> {periods: [period]}'
+- name: series_updated
+  class: fundamental
+  description: >-
+    Triggered when fundamental data errors or corrections are detected in the last 5 minutes. Fires on a
+    5-minute cadence for affected companies.
+  payload_fields: [event_type, company_id, series]
+  series_shape: >-
+    array of error objects, each with id, type (e.g. MERGING_ERROR), period, run_date and
+    details {fundamental_id, series_id, field_changed, old value, new value}
+  note: >-
+    This is the restatement/correction channel and is the most important event for anyone holding cached
+    values — it carries both the old and the new value of the changed field.
+- name: document_added
+  class: document
+  status: beta
+  scope: US-only
+  description: >-
+    Triggered when a new supported document (filing, transcript or presentation) is processed and indexed
+    for a company the subscriber has webhook coverage for.
+  payload_fields: [event_type, company_id, document]
+  document_fields: [document_id, filing_type, document_type, title, calendar_period, filing_date]
+  caveats:
+  - Filing types are NOT normalized — a 10-K/A arrives as `10-K/A`, not `10-K`.
+  - Opt-in and scoped to subscribed companies only.
+  - One notification per document; events are not batched.
+  - Timing is safe — the event fires after indexing, so an immediate GET /api/v3/documents/{document_id} does not race.
+
+delivery:
+  guarantee: at-most-once
+  retries: false
+  retry_note: >-
+    SIGNIFICANT GAP, and Daloopa states it plainly rather than hiding it: document_added deliveries are
+    NOT retried on failure. If the subscriber endpoint is unreachable or returns a non-2xx, the event is
+    simply lost. Recovery is manual — backfill via GET /api/v3/documents and audit via
+    GET /api/v3/webhooks/deliveries. Any consumer must treat webhooks as a latency optimization over a
+    polling baseline, never as the system of record.
+  dedupe:
+    required: true
+    key: document.document_id
+    note: >-
+      The same document may in rare cases be delivered more than once, so consumers must dedupe on
+      document_id. This is consumer-side dedupe guidance, NOT request idempotency on the API.
+  ordering: not guaranteed
+  timeout_on_test_delivery: 10 seconds
+
+security:
+  signing: false
+  signature_header: null
+  model: caller-defined static shared secret
+  mechanism: >-
+    The subscriber chooses a header_name, a prefix and an auth_secret when registering the webhook, and
+    Daloopa sends that header verbatim on every delivery — e.g. header_name=Authorization,
+    prefix=X-API-KEY, auth_secret=<secret> produces 'Authorization: X-API-KEY <secret>'.
+  secret_storage: Auth secrets are encrypted before storage.
+  finding: >-
+    There is NO payload signature — no HMAC, no timestamped signing header, no replay window. Authenticity
+    rests entirely on a static bearer-style secret in a subscriber-chosen header. That secret is replayable
+    if ever captured, and a receiver cannot verify that a payload was not tampered with in transit beyond
+    trusting TLS. For a vendor whose payloads move restated financial values that feed investment models,
+    an HMAC signature over the body with a timestamp — the Stripe/GitHub pattern — is the clear gap.
+
+management:
+  self_service: true
+  limit_per_api_key: 10
+  ownership: scoped to the authenticated user's API key
+  operations:
+  - {operation: list_webhooks, method: GET, path: /api/v3/webhooks, note: 'filters: event_type, active, is_test'}
+  - {operation: create_webhook, method: POST, path: /api/v3/webhooks}
+  - {operation: retrieve_webhook, method: GET, path: '/api/v3/webhooks/{id}'}
+  - {operation: update_webhook, method: PATCH, path: '/api/v3/webhooks/{id}', note: all fields optional, partial update}
+  - {operation: delete_webhook, method: DELETE, path: '/api/v3/webhooks/{id}', note: returns 204}
+  - {operation: list_webhook_types, method: GET, path: /api/v3/webhooks/event-types, note: discover valid event types at runtime}
+  - {operation: get_webhook_sample_payload, method: GET, path: '/api/v3/webhooks/{webhook_id}/sample-payload'}
+  - {operation: test_webhook_delivery, method: POST, path: '/api/v3/webhooks/{webhook_id}/test'}
+  - {operation: list_webhook_deliveries, method: GET, path: /api/v3/webhooks/deliveries, note: 'reverse-chronological; DRF limit/offset, page size 500 max'}
+
+observability:
+  delivery_history: true
+  operation: list_webhook_deliveries
+  fields: [timestamp, event_type, company_id, response_status, response_body, is_test, duration_ms]
+  response_body_truncation: 1000 characters
+  note: >-
+    A queryable delivery log with the receiver's own status code and round-trip duration is a genuinely
+    strong operational affordance, and it is the only way to detect the events lost to the no-retry policy.
+
+testing:
+  supported: true
+  see: sandbox/daloopa-sandbox.yml
+
+cross_links:
+  conventions: conventions/daloopa-conventions.yml
+  openapi: openapi/daloopa-api-openapi.yml
+  sandbox: sandbox/daloopa-sandbox.yml
+  lifecycle: lifecycle/daloopa-lifecycle.yml

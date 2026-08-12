@@ -1,0 +1,237 @@
+generated: '2026-08-11'
+method: derived
+source: >-
+  Derived from openapi/daloopa-api-openapi.yml, openapi/daloopa-mcp-service-openapi.json,
+  well-known/ probe results and the published documentation set. Each entry records evidence; nothing is
+  asserted from vendor marketing claims.
+description: >-
+  Cross-cutting standards conformance for the Daloopa REST API v3 and hosted MCP server. Daloopa's
+  strongest conformance is on the AGENT side — the MCP authorization chain is genuinely spec-correct —
+  and its weakest is on ordinary REST hygiene, where it uses no problem-details standard and no
+  rate-limit or deprecation headers.
+
+standards:
+
+- id: openapi
+  name: OpenAPI Specification
+  conforms: true
+  version: 3.0.3
+  evidence: >-
+    A parsable 182KB OpenAPI 3.0.3 document is served UNAUTHENTICATED at
+    https://app.daloopa.com/swagger.json (200, application/vnd.oai.openapi). 38 paths, 41 operations,
+    16 tags, every operation tagged and carrying an operationId. A second OpenAPI 3.1.0 document
+    ("Daloopa MCP Service") is served at https://mcp.daloopa.com/openapi.json (200).
+  note: >-
+    Notably, the docs host does NOT serve the spec — https://docs.daloopa.com/openapi.json returns the
+    ReadMe SPA shell with a 404. The real contract lives at the API host root.
+
+- id: mcp
+  name: Model Context Protocol
+  conforms: true
+  version: '2025-03-26 (authorization spec cited by the provider)'
+  evidence: >-
+    Hosted remote server at https://mcp.daloopa.com/server/mcp over Streamable HTTP. An anonymous
+    tools/list returns 401 with a correctly formed
+    WWW-Authenticate: Bearer resource_metadata="https://mcp.daloopa.com/.well-known/oauth-protected-resource"
+    challenge — the spec-mandated discovery behavior. Nine documented tools.
+
+- id: oauth2
+  name: OAuth 2.0 / 2.1 Authorization Framework
+  conforms: true
+  scope: MCP server only
+  evidence: >-
+    https://mcp.daloopa.com/.well-known/oauth-authorization-server returns 200 with issuer,
+    authorization_endpoint, token_endpoint, registration_endpoint, response_types_supported [code],
+    grant_types_supported [authorization_code], code_challenge_methods_supported [S256] and
+    token_endpoint_auth_methods_supported [client_secret_post].
+  note: >-
+    Authorization-code-only with mandatory PKCE and no implicit grant — the OAuth 2.1 shape. No
+    scopes_supported is advertised, so authorization is coarse-grained (all-or-nothing per credential)
+    rather than scoped.
+
+- id: rfc8414
+  name: 'RFC 8414 — OAuth 2.0 Authorization Server Metadata'
+  conforms: true
+  evidence: '/.well-known/oauth-authorization-server returns 200 with a conforming metadata document.'
+
+- id: rfc9728
+  name: 'RFC 9728 — OAuth 2.0 Protected Resource Metadata'
+  conforms: true
+  evidence: >-
+    /.well-known/oauth-protected-resource returns 200 with {resource, authorization_servers}, and the 401
+    challenge points at it. The full discovery chain resolves from a cold start.
+
+- id: rfc7591
+  name: 'RFC 7591 — OAuth 2.0 Dynamic Client Registration'
+  conforms: true
+  evidence: >-
+    registration_endpoint https://mcp.daloopa.com/register is advertised in the AS metadata and declared
+    as POST /register (operationId register_client_register_post) in the MCP service OpenAPI.
+  note: An MCP client can self-register with no manual credential provisioning.
+
+- id: rfc7636
+  name: 'RFC 7636 — PKCE'
+  conforms: true
+  evidence: 'code_challenge_methods_supported: ["S256"]. S256 only; `plain` is not offered.'
+
+- id: rfc7617
+  name: 'RFC 7617 — HTTP Basic Authentication'
+  conforms: true
+  scope: REST API v3
+  evidence: >-
+    securityScheme apiKeyAuth is {type: http, scheme: basic} with credentials formed as
+    base64(email:api_key). v3 accepts ONLY this scheme; the legacy plaintext key form was retired.
+
+- id: rfc9457
+  name: 'RFC 9457 — Problem Details for HTTP APIs'
+  conforms: false
+  evidence: >-
+    No operation declares application/problem+json. All 148 declared 4xx/5xx responses use application/json
+    across SEVEN distinct proprietary envelope shapes ({detail}; {error,message,status_code}; {error};
+    {message}; {success,error,details}; {success,error,message}; {available_sections,details,error,reason}).
+  see: errors/daloopa-problem-types.yml
+
+- id: rfc8594
+  name: 'RFC 8594 — Sunset HTTP Header'
+  conforms: false
+  evidence: >-
+    v2 is documented as deprecated pending sunset, but no Sunset or Deprecation response header is emitted
+    or declared, and no sunset date is published. The deprecation signal is prose-only.
+  see: lifecycle/daloopa-lifecycle.yml
+
+- id: ratelimit-headers
+  name: 'IETF RateLimit header fields (draft) / Retry-After'
+  conforms: false
+  evidence: >-
+    A 120 req/min limit and a 429 response are documented, and 429 is declared on 36 of 41 operations, but
+    no RateLimit-*, X-RateLimit-* or Retry-After header is declared in the spec or named in the docs — even
+    though the docs instruct clients to "respect any retry guidance" the API provides.
+  see: rate-limits/daloopa-rate-limits.yml
+
+- id: pagination
+  name: Consistent pagination
+  conforms: true
+  style: limit/offset
+  evidence: >-
+    limit and offset appear on 13 operations; paginated responses use the Django REST Framework
+    {count, next, previous, results} envelope. v3 converted GET /companies to this shape.
+
+- id: idempotency
+  name: Request idempotency (Idempotency-Key)
+  conforms: false
+  evidence: >-
+    Zero occurrences of "idempoten" in the OpenAPI and zero in llms.txt. The single documentation mention
+    is consumer-side webhook dedupe guidance, not a request-idempotency contract. POST /api/v3/webhooks and
+    POST /api/v3/partnerships/user are non-idempotent creates with no replay protection.
+
+- id: webhook-signing
+  name: Signed webhook payloads (HMAC)
+  conforms: false
+  evidence: >-
+    Webhook authenticity relies on a static, subscriber-chosen header carrying a shared secret. No HMAC
+    signature, no timestamp, no replay window.
+  see: asyncapi/daloopa-webhooks.yml
+
+- id: asyncapi
+  name: AsyncAPI
+  conforms: false
+  evidence: >-
+    An event surface exists (4 webhook event types) but no AsyncAPI document is published on any host. The
+    event catalog is prose plus example payloads.
+
+- id: rfc9116
+  name: 'RFC 9116 — security.txt'
+  conforms: false
+  evidence: >-
+    /.well-known/security.txt returns 404 on all five hosts (daloopa.com, www.daloopa.com, app.daloopa.com,
+    docs.daloopa.com, mcp.daloopa.com).
+  see: well-known/daloopa-well-known.yml
+
+- id: a2a
+  name: 'A2A Agent Card'
+  conforms: false
+  evidence: >-
+    /.well-known/agent-card.json and the legacy /.well-known/agent.json both 404 on all five hosts. No
+    AgentCard artifact or pointer is emitted.
+
+- id: llmstxt
+  name: llms.txt
+  conforms: true
+  evidence: >-
+    https://docs.daloopa.com/llms.txt returns 200 text/plain (21KB), enumerating every guide page and every
+    API reference page with descriptions. Saved verbatim to llms/daloopa-llms.txt.
+  note: >-
+    Daloopa goes further than serving the file — every documentation page opens with an instruction telling
+    an LLM to fetch the index first, and each page is individually retrievable as .md.
+
+- id: agent-skills
+  name: Agent Skills (SKILL.md)
+  conforms: true
+  evidence: >-
+    21 first-party SKILL.md files with name/description/argument-hint frontmatter published under
+    Apache-2.0 at https://github.com/daloopa/daloopa-plugin-claude, plus a Codex/ChatGPT variant.
+  see: skills/_index.yml
+
+- id: gics
+  name: 'GICS — Global Industry Classification Standard'
+  conforms: partial
+  evidence: >-
+    The v3 release notes state that sub-industries are being retired in favor of "standardized GICS-based
+    Industry and Sector filtering for taxonomy endpoints". Taxonomy sector/industry endpoints exist
+    (list_taxonomy_sectors, list_taxonomy_industries), but the spec does not declare GICS codes as such.
+  note: Recorded as partial — the migration is stated by the provider but not yet visible in the contract.
+
+- id: isin
+  name: 'ISO 6166 — ISIN'
+  conforms: true
+  evidence: >-
+    GET /api/v3/industry-company-models returns company-to-industry-model mappings "including ISIN
+    identifiers", giving a standard security identifier alongside Daloopa's internal company_id.
+
+- id: gdpr
+  name: GDPR
+  conforms: claimed
+  evidence: >-
+    GDPR is referenced in the published privacy policy at https://daloopa.com/privacy-policy. A dedicated
+    MCP privacy and data-collection disclosure is also published at
+    https://docs.daloopa.com/docs/daloopa-privacy-and-data-collection-disclosure-for-mcp-access.
+  note: >-
+    Recorded as CLAIMED, not verified. No certification artifact was retrievable.
+
+- id: soc2
+  name: 'SOC 2'
+  conforms: unverified
+  evidence: >-
+    A Vanta-hosted trust center is served at https://trust.daloopa.com/ (200), but its contents render
+    client-side and no certification name could be read from the served HTML or from any unauthenticated
+    Vanta API path. No SOC 2 / ISO 27001 claim appears on the marketing site, docs, terms or privacy policy.
+  note: >-
+    Deliberately left unverified rather than assumed. No Compliance pointer is emitted for Daloopa because
+    no named certification could be confirmed from a public source.
+  see: security/daloopa-trust-center.yml
+
+- id: sso-saml-oidc
+  name: Enterprise SSO
+  conforms: true
+  evidence: >-
+    Documented Single Sign-On integration with Microsoft Entra (Azure AD) at
+    https://docs.daloopa.com/docs/single-sign-on. Applies to application accounts.
+
+summary:
+  conformant: 13
+  non_conformant: 8
+  partial_or_claimed: 3
+  unverified: 1
+  headline: >-
+    Daloopa's agent-facing conformance is materially ahead of its REST conformance. The MCP OAuth chain
+    (RFC 8414 + 9728 + 7591 + 7636) is complete and correct, llms.txt is served and reinforced on every
+    docs page, and 21 Agent Skills are published open-source. Meanwhile the REST API ships no problem
+    details, no rate-limit headers, no deprecation headers, no idempotency and no signed webhooks. The
+    company has clearly invested in being consumable by agents before being conventional for developers.
+
+cross_links:
+  authentication: authentication/daloopa-authentication.yml
+  errors: errors/daloopa-problem-types.yml
+  lifecycle: lifecycle/daloopa-lifecycle.yml
+  well_known: well-known/daloopa-well-known.yml
+  mcp: mcp/daloopa-mcp.yml

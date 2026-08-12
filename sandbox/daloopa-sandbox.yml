@@ -1,0 +1,98 @@
+generated: '2026-08-11'
+method: searched
+source: https://docs.daloopa.com/docs/testing-your-webhooks
+docs: https://docs.daloopa.com/docs/testing-your-webhooks
+description: >-
+  Daloopa provides NO sandbox or test mode for the REST API itself — there is no test-vs-live key prefix,
+  no separate test host, no fixture dataset and no time simulation. Calls are made against production data
+  with production credentials, and they consume real datapoint quota. What Daloopa DOES ship is a scoped
+  but genuinely useful test facility for the WEBHOOK surface, and this artifact records that accurately
+  rather than overstating it.
+
+api_sandbox:
+  available: false
+  test_mode: false
+  test_credentials: false
+  key_prefixes: null
+  separate_host: false
+  fixture_data: false
+  time_simulation: false
+  note: >-
+    A single API key authenticates against live data. Integration development therefore burns real
+    datapoint consumption against the account's monthly limit — worth knowing before building a test suite
+    that loops. There is no documented way to exercise the API without metering. Callers can bound the cost
+    by watching GET /api/v3/consumption while developing.
+
+webhook_testing:
+  available: true
+  scope: webhook delivery only
+  mechanisms:
+
+  - name: Test flag
+    field: is_test
+    kind: request/response flag
+    description: >-
+      Webhooks can be created and filtered as test webhooks. `is_test` is a query filter on both
+      GET /api/v3/webhooks and GET /api/v3/webhooks/deliveries, so test traffic can be isolated from
+      production traffic in both the registry and the delivery log.
+    operations: [list_webhooks, list_webhook_deliveries]
+
+  - name: Sample payload
+    operation: get_webhook_sample_payload
+    method: GET
+    path: '/api/v3/webhooks/{webhook_id}/sample-payload'
+    description: >-
+      Returns a payload matching the webhook's configured event type, built from static example data and
+      carrying "test": true. Fundamental events (clientview_updated, incremental_update, series_updated)
+      return a `series` field; document_added returns a `document` object instead.
+    access: webhook owner only
+    note: >-
+      Lets a consumer write and validate a parser against the exact envelope shape before any real event
+      fires — the correct primitive, since the fundamental and document envelopes genuinely differ.
+
+  - name: Synchronous test delivery
+    operation: test_webhook_delivery
+    method: POST
+    path: '/api/v3/webhooks/{webhook_id}/test'
+    description: >-
+      Triggers a real, synchronous POST to the webhook's configured URL using a sample payload with
+      "test": true, and returns immediate feedback.
+    returns: [http_status_code, response_body, round_trip_duration_ms]
+    response_body_truncation: 2000 characters
+    timeout: 10 seconds
+    access: webhook owner only
+    note: >-
+      This is the strongest piece of the testing story. It closes the loop end-to-end — the caller learns
+      whether their own endpoint was reachable, what it returned and how slow it was, without waiting for a
+      real market event. For a data feed whose real events fire on earnings dates, being able to prove the
+      pipe works on a Tuesday is genuinely valuable.
+
+  - name: Delivery history
+    operation: list_webhook_deliveries
+    method: GET
+    path: /api/v3/webhooks/deliveries
+    description: >-
+      Reverse-chronological delivery log with timestamp, event type, company_id, response status, truncated
+      response body, test flag and round-trip duration. Filterable by webhook_id and is_test.
+    note: >-
+      Doubles as the only recovery mechanism for the at-most-once delivery policy — document_added events
+      are not retried, so the log is how a consumer discovers what was dropped.
+
+published_test_values:
+  note: >-
+    No test tokens, test cards, test accounts or fixture identifiers are published, and none are invented
+    here. The sample payloads are generated server-side per webhook and are not reproduced in this artifact.
+
+gaps:
+- >-
+  No API sandbox means no way to develop or run CI against the REST API without consuming metered
+  datapoints from the production allowance.
+- >-
+  Webhook testing covers DELIVERY but not RECEIPT semantics — there is no way to replay a historical real
+  event, and no way to simulate a restatement (series_updated), which is the hardest event to write
+  correct consumer logic for.
+
+cross_links:
+  webhooks: asyncapi/daloopa-webhooks.yml
+  conventions: conventions/daloopa-conventions.yml
+  plans: plans/daloopa-plans-pricing.yml

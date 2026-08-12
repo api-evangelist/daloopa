@@ -1,0 +1,132 @@
+generated: '2026-08-11'
+method: searched
+source: >-
+  Registry searches against npm, PyPI, RubyGems, crates.io, NuGet, Maven Central and pkg.go.dev, plus the
+  GitHub org https://github.com/daloopa and the Daloopa documentation set.
+description: >-
+  Daloopa publishes NO conventional client SDK in any language package registry. It distributes its
+  first-party client-side software through three non-registry channels instead: agent plugins on GitHub,
+  an Office add-in through Microsoft AppSource, and native data shares through cloud marketplaces. This
+  artifact records what exists and, just as importantly, what does not.
+
+registry_search:
+  npm: {query: daloopa, results: 0, checked: '2026-08-11', endpoint: 'https://registry.npmjs.org/-/v1/search?text=daloopa'}
+  pypi: {query: daloopa, results: 0, checked: '2026-08-11', endpoint: 'https://pypi.org/pypi/daloopa/json', http_status: 404}
+  rubygems: {query: daloopa, results: 0, checked: '2026-08-11'}
+  crates_io: {query: daloopa, results: 0, checked: '2026-08-11'}
+  nuget: {query: daloopa, results: 0, checked: '2026-08-11'}
+  maven_central: {query: daloopa, results: 0, checked: '2026-08-11'}
+  go: {query: daloopa, results: 0, checked: '2026-08-11'}
+  finding: >-
+    Zero first-party packages in any language registry. A developer integrating the REST API writes raw
+    HTTP. Given that the API is a straightforward Basic-auth REST surface with an anonymously readable
+    OpenAPI at https://app.daloopa.com/swagger.json, a generated SDK is cheap for Daloopa to ship and its
+    absence is a real DX gap — but it is an honest absence, not an abandoned SDK.
+
+official_package_count: 3
+
+packages:
+- name: daloopa-plugin-claude
+  official: true
+  kind: agent-plugin
+  registry: github
+  url: https://github.com/daloopa/daloopa-plugin-claude
+  install: 'Claude Code plugin marketplace (daloopa-marketplace), source ./'
+  language: markdown/json
+  license: Apache-2.0
+  version: '1.0.0'
+  version_source: .claude-plugin/plugin.json
+  published: '2026-07-22'
+  published_basis: >-
+    Latest push to the default branch. The repository publishes NO GitHub releases and NO git tags, so
+    there is no release-dated artifact; 1.0.0 is the version declared inside plugin.json and it has never
+    been incremented.
+  currency_note: >-
+    Checked, not guessed. Because the plugin carries no tags or releases, a consumer installing from the
+    marketplace cannot pin a version — they always get the tip of main. The declared 1.0.0 is therefore
+    decorative rather than a resolvable version.
+  contents: 21 SKILL.md agent skills + 2 shared reference docs + .mcp.json server config
+  see: skills/_index.yml
+
+- name: daloopa-plugin-codex
+  official: true
+  kind: agent-plugin
+  registry: github
+  url: https://github.com/daloopa/daloopa-plugin-codex
+  install: Codex / ChatGPT skills packaging via scripts/package_chatgpt_skills.py
+  language: python/markdown
+  license: Apache-2.0
+  version: null
+  version_source: null
+  published: '2026-07-22'
+  published_basis: Latest push to the default branch; no releases, no tags.
+  currency_note: >-
+    version: null is a checked absence — the repository publishes no release, tag or version field that a
+    consumer could pin to. Description: "Financial analysis skills for Codex and ChatGPT powered by Daloopa".
+  contents: The same 21 skills, each with an accompanying agents/openai.yaml.
+
+- name: Daloopa Excel Add-In
+  official: true
+  kind: office-addin
+  registry: microsoft-appsource
+  url: https://docs.daloopa.com/docs/install-daloopa-excel-add-in
+  security_docs: https://docs.daloopa.com/docs/excel-add-in-security-and-architecture
+  language: office-js
+  version: null
+  version_source: null
+  currency_note: >-
+    version: null is a checked absence, not an unchecked field. AppSource does not expose an
+    unauthenticated version-metadata endpoint equivalent to a package registry, and the installation docs
+    do not state a version number. The add-in self-updates, so a consumer cannot pin a version either.
+    Daloopa maintains a github.com/daloopa/microsoft-appsource-validation repository, consistent with an
+    AppSource listing pipeline.
+  note: >-
+    Distributed and updated through Microsoft AppSource rather than a developer package registry. Daloopa
+    publishes a dedicated security-and-architecture page for it aimed at customer IT/infosec review, which
+    is a notably mature move for an Office add-in.
+  see: components/daloopa-components.yml
+
+other_first_party_repositories:
+- name: daloopa/investing
+  url: https://github.com/daloopa/investing
+  language: Python
+  license: Apache-2.0
+  last_pushed: '2026-07-22'
+  packaged: false
+  note: Public first-party repository; not published to PyPI and carries no releases or tags.
+- name: daloopa/finretrieval
+  url: https://github.com/daloopa/finretrieval
+  language: Python
+  last_pushed: '2026-03-10'
+  packaged: false
+- name: daloopa/microsoft-appsource-validation
+  url: https://github.com/daloopa/microsoft-appsource-validation
+  last_pushed: '2026-01-06'
+  packaged: false
+excluded_repositories:
+  note: >-
+    github.com/daloopa/hiring-backend and hiring-frontend are engineering-candidate coding challenges, not
+    client software, and are excluded.
+
+non_registry_distribution:
+- channel: Snowflake Marketplace
+  kind: data-share
+  docs: https://docs.daloopa.com/docs/snowflake
+  note: Native data share — no ETL, no client library. Subscription managed via POST /api/v3/snowflake/company-subscription.
+- channel: Databricks Marketplace
+  kind: data-share
+  docs: https://docs.daloopa.com/docs/databricks
+  note: Native data share. Subscription managed via POST /api/v3/databricks/company-subscription.
+- channel: AWS S3
+  kind: file-delivery
+  docs: https://docs.daloopa.com/docs/aws-s3
+  note: Raw Parquet files delivered into a dedicated S3 bucket for teams running their own pipelines.
+
+third_party_note: >-
+  Community repositories referencing Daloopa exist on GitHub (for example kandhawe1/daloopa-investing and
+  crmchattie/daloopa). None are first-party and none are recorded here as packages.
+
+cross_links:
+  skills: skills/_index.yml
+  components: components/daloopa-components.yml
+  mcp: mcp/daloopa-mcp.yml

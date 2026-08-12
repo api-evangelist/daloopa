@@ -1,0 +1,106 @@
+generated: '2026-08-11'
+method: probed
+source: live GET probes of every /.well-known/ path across all five Daloopa hosts
+description: >-
+  Well-known probe across daloopa.com, www.daloopa.com, app.daloopa.com (the API host),
+  docs.daloopa.com (the docs host) and mcp.daloopa.com (the MCP host). Two paths returned real
+  documents, both on the MCP host, both part of the MCP OAuth discovery chain. Every other path on
+  every host 404s. Recorded in full — an absence is data.
+
+summary:
+  hosts_probed: 5
+  paths_probed_per_host: 8
+  real_document_hits: 2
+  hit_hosts: [mcp.daloopa.com]
+  security_txt: absent
+  agent_card: absent
+  openid_configuration: absent
+  api_catalog: absent
+  ai_plugin: absent
+
+probes:
+- host: mcp.daloopa.com
+  results:
+  - {path: /.well-known/oauth-authorization-server, status: 200, content_type: application/json, hit: true, file: well-known/daloopa-mcp-oauth-authorization-server.json}
+  - {path: /.well-known/oauth-protected-resource, status: 200, content_type: application/json, hit: true, file: well-known/daloopa-mcp-oauth-protected-resource.json}
+  - {path: /.well-known/security.txt, status: 404, content_type: application/json, hit: false}
+  - {path: /.well-known/openid-configuration, status: 404, content_type: application/json, hit: false}
+  - {path: /.well-known/api-catalog, status: 404, content_type: application/json, hit: false}
+  - {path: /.well-known/ai-plugin.json, status: 404, content_type: application/json, hit: false}
+  - {path: /.well-known/agent-card.json, status: 404, content_type: application/json, hit: false}
+  - {path: /.well-known/agent.json, status: 404, content_type: application/json, hit: false}
+  note: >-
+    The MCP service OpenAPI also declares GET /.well-known/openai-apps-challenge, an OpenAI Apps directory
+    verification endpoint. It is a declared route on the host rather than a standards-track well-known.
+
+- host: app.daloopa.com
+  results:
+  - {path: /.well-known/security.txt, status: 404, hit: false}
+  - {path: /.well-known/openid-configuration, status: 404, hit: false}
+  - {path: /.well-known/oauth-authorization-server, status: 404, hit: false}
+  - {path: /.well-known/api-catalog, status: 404, hit: false}
+  - {path: /.well-known/ai-plugin.json, status: 404, hit: false}
+  - {path: /.well-known/agent-card.json, status: 404, hit: false}
+  - {path: /.well-known/agent.json, status: 404, hit: false}
+  - {path: /llms.txt, status: 404, hit: false}
+  note: >-
+    Clean 404s (179-byte Not Found), not an SPA catch-all — so these are trustworthy negatives. This host
+    DOES serve a real OpenAPI at /swagger.json (200), which is how the contract was discovered.
+
+- host: docs.daloopa.com
+  results:
+  - {path: /llms.txt, status: 200, content_type: text/plain, hit: true, file: llms/daloopa-llms.txt}
+  - {path: /.well-known/security.txt, status: 404, hit: false}
+  - {path: /.well-known/openid-configuration, status: 404, hit: false}
+  - {path: /.well-known/oauth-authorization-server, status: 404, hit: false}
+  - {path: /.well-known/api-catalog, status: 404, hit: false}
+  - {path: /.well-known/ai-plugin.json, status: 404, hit: false}
+  - {path: /.well-known/agent-card.json, status: 404, hit: false}
+  - {path: /.well-known/agent.json, status: 404, hit: false}
+  note: >-
+    404 bodies are the ReadMe SPA shell (~68KB of HTML), so these are soft-404s and are recorded as MISSES
+    on body inspection rather than on status alone. /openapi.json on this host also returns the 68KB HTML
+    shell with a 404 — the classic false-positive trap. The real spec is on the API host.
+
+- host: daloopa.com
+  results:
+  - {path: /.well-known/security.txt, status: 404, hit: false}
+  - {path: /.well-known/openid-configuration, status: 404, hit: false}
+  - {path: /.well-known/oauth-authorization-server, status: 404, hit: false}
+  - {path: /.well-known/api-catalog, status: 404, hit: false}
+  - {path: /.well-known/ai-plugin.json, status: 404, hit: false}
+  - {path: /.well-known/agent-card.json, status: 404, hit: false}
+  - {path: /.well-known/agent.json, status: 404, hit: false}
+  - {path: /llms.txt, status: 404, hit: false}
+  note: >-
+    WordPress marketing site. Every /.well-known/* path returns the 134KB themed 404 page, so all are
+    soft-404 misses confirmed by body inspection.
+
+- host: www.daloopa.com
+  results:
+  - {path: /.well-known/security.txt, status: 404, hit: false}
+  - {path: /.well-known/openid-configuration, status: 404, hit: false}
+  - {path: /.well-known/oauth-authorization-server, status: 404, hit: false}
+  - {path: /.well-known/api-catalog, status: 404, hit: false}
+  - {path: /.well-known/ai-plugin.json, status: 404, hit: false}
+  - {path: /.well-known/agent-card.json, status: 404, hit: false}
+  - {path: /.well-known/agent.json, status: 404, hit: false}
+  - {path: /llms.txt, status: 404, hit: false}
+
+findings:
+- >-
+  No security.txt on any host. Daloopa runs a Vanta trust center at trust.daloopa.com but publishes no
+  RFC 9116 machine-readable security contact, so an automated scanner has nowhere to look. This is the
+  cheapest unclaimed win on the profile.
+- >-
+  No A2A agent card on any host, at either the canonical /.well-known/agent-card.json path or the legacy
+  /.well-known/agent.json path. No AgentCard pointer is emitted.
+- >-
+  The MCP OAuth discovery chain is complete and correct: the 401 challenge names the protected-resource
+  document, which names the authorization server, which advertises a registration endpoint and PKCE S256.
+  An MCP client can bootstrap from a cold start with no out-of-band configuration.
+
+cross_links:
+  authentication: authentication/daloopa-authentication.yml
+  mcp: mcp/daloopa-mcp.yml
+  security: security/daloopa-domain-security.yml

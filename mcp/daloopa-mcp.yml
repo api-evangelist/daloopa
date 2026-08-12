@@ -1,0 +1,184 @@
+generated: '2026-08-11'
+method: searched
+status: published
+source: https://docs.daloopa.com/docs/daloopa-mcp
+docs:
+  introduction: https://docs.daloopa.com/docs/daloopa-mcp
+  authentication: https://docs.daloopa.com/docs/mcp-authentication
+  integrations: https://docs.daloopa.com/docs/mcp-integrations
+  tool_prompts: https://docs.daloopa.com/docs/mcp-prompts
+  prompt_library: https://docs.daloopa.com/docs/prompt-library
+  skills: https://docs.daloopa.com/docs/skills
+  api_vs_mcp: https://docs.daloopa.com/docs/api-vs-mcp
+  privacy: https://docs.daloopa.com/docs/daloopa-privacy-and-data-collection-disclosure-for-mcp-access
+  product_page: https://daloopa.com/products/mcp
+
+server:
+  name: daloopa
+  transport: http
+  protocol: Streamable HTTP
+  url: https://mcp.daloopa.com/server/mcp
+  hosted: true
+  self_hostable: false
+  runtime: uvicorn (observed in the Server response header)
+  companion_server:
+    name: daloopa-docs
+    url: https://docs.daloopa.com/mcp
+    purpose: >-
+      A second, documentation-oriented MCP server ("Docs MCP Server") intended to help an LLM get up and
+      running with the API and MCP server faster.
+    probe: >-
+      An anonymous JSON-RPC initialize against this endpoint was answered by the docs host's WAF with an
+      HTML "This request is blocked by our firewall" page rather than a JSON-RPC response, so its tool
+      list could not be enumerated anonymously. Recorded as blocked, not as absent.
+  client_config_source: https://raw.githubusercontent.com/daloopa/daloopa-plugin-claude/main/.mcp.json
+
+auth:
+  methods: [oauth2, bearer_token, apikey_header]
+  gated: true
+  oauth2:
+    spec: MCP authorization specification (2025-03-26)
+    issuer: https://mcp.daloopa.com
+    authorization_endpoint: https://mcp.daloopa.com/authorize
+    token_endpoint: https://mcp.daloopa.com/token
+    registration_endpoint: https://mcp.daloopa.com/register
+    dynamic_client_registration: true
+    grant_types: [authorization_code]
+    response_types: [code]
+    pkce: S256
+    token_endpoint_auth_methods: [client_secret_post]
+    scopes_supported: null
+    discovery:
+      authorization_server: well-known/daloopa-mcp-oauth-authorization-server.json
+      protected_resource: well-known/daloopa-mcp-oauth-protected-resource.json
+  bearer_token:
+    mint_endpoint: https://mcp.daloopa.com/auth/token
+    from: an existing Daloopa API key
+    lifetime: 24h
+  apikey_header:
+    header: X-API-KEY
+    note: Sent on every request; no token generation or refresh required.
+  see: authentication/daloopa-authentication.yml
+
+x-evidence:
+  fetched: '2026-08-11'
+  tools_list_probe:
+    url: https://mcp.daloopa.com/server/mcp
+    method: 'POST jsonrpc tools/list (anonymous)'
+    http_status: 401
+    body: Unauthorized
+    www_authenticate: 'Bearer resource_metadata="https://mcp.daloopa.com/.well-known/oauth-protected-resource"'
+    interpretation: >-
+      A correct, spec-compliant MCP OAuth challenge. The live tool schemas (inputSchema) are auth-gated and
+      require authenticated introspection. The tool NAMES and DESCRIPTIONS below are transcribed verbatim
+      from Daloopa's published documentation, not fabricated, and their input contracts are inferred from
+      the backing REST operations in mcp/daloopa-tool-crosswalk.yml.
+  oauth_metadata_probe:
+    - {url: 'https://mcp.daloopa.com/.well-known/oauth-authorization-server', http_status: 200, content_type: application/json}
+    - {url: 'https://mcp.daloopa.com/.well-known/oauth-protected-resource', http_status: 200, content_type: application/json}
+  service_openapi:
+    url: https://mcp.daloopa.com/openapi.json
+    http_status: 200
+    note: >-
+      The MCP host publishes its own OpenAPI 3.1.0 ("Daloopa MCP Service") covering the auth, consumption
+      and discovery endpoints that surround the MCP transport. Saved to
+      openapi/daloopa-mcp-service-openapi.json. Rendered docs at https://mcp.daloopa.com/redoc.
+
+tool_count: 9
+tools_source: https://docs.daloopa.com/docs/daloopa-mcp (Available Tools section)
+tools:
+- name: discover_companies
+  category: discovery
+  description: >-
+    Locates companies within the Daloopa financial database by searching with either stock ticker symbols
+    or company names. Returns the ticker symbol, complete corporate name, and unique company identifier
+    required for accessing detailed financial data.
+- name: discover_company_series
+  category: discovery
+  description: >-
+    Retrieves the available financial metrics and data series for a specified company, filtered by keyword
+    and time period. Displays all matching financial series along with their corresponding metric IDs,
+    enabling targeted data extraction.
+- name: discover_company_documents
+  category: documents
+  description: >-
+    Lists the financial documents Daloopa has indexed for a company within specified calendar quarters —
+    10-K, 10-Q and 8-K filings, earnings transcripts, news articles and company presentations. Each result
+    returns its filing type, filing date, title and a unique document identifier.
+- name: get_company_fundamentals
+  category: fundamentals
+  description: >-
+    Extracts comprehensive financial fundamentals for a company across selected time periods and specific
+    metrics — income statements, balance sheets, cash flow statements and additional financial metrics.
+- name: get_document_content
+  category: documents
+  description: >-
+    Retrieves the full processed text of a Daloopa-indexed document by identifier. Large filings are
+    divided into named sections so a specific section (for example Risk Factors or MD&A) can be requested
+    without returning the entire filing.
+- name: search_documents
+  category: documents
+  description: >-
+    Searches financial filings, transcripts and company presentations using keyword matching to extract
+    qualitative insights across selected time periods — management commentary, forward guidance, risk
+    factors and strategic initiatives.
+- name: get_stock_prices
+  category: market_data
+  description: >-
+    Retrieves daily OHLCV stock price data for one or more companies across a date or date range, enabling
+    trading-multiple calculations (P/E, EV/EBITDA, Price/Book) and price performance analysis.
+- name: list_skills
+  category: skills
+  description: >-
+    Lists every available investing skill — the structured analysis, valuation and deliverable workflows
+    Daloopa provides. Each entry returns the skill's slug, title, a description of what it produces, and
+    the inputs it requires.
+- name: get_skill
+  category: skills
+  description: >-
+    Fetches the full instructions for a single investing skill with the caller's inputs substituted in,
+    returning a complete skill template ready to follow.
+
+prompts:
+  published: true
+  docs: https://docs.daloopa.com/docs/mcp-prompts
+  note: >-
+    Daloopa publishes its MCP tool prompts explicitly "for developers that are interested in building
+    their own MCP on top of Daloopa's APIs" — instructions to the LLM covering financial comparisons,
+    data presentation formatting and multi-step analytical processes. Publishing the prompt layer rather
+    than only the tool list is uncommon and materially useful to anyone integrating.
+
+skills_surface:
+  note: >-
+    The skills exposed through list_skills / get_skill are the SAME investing skills served over REST at
+    GET /api/v3/investing-skills, and they overlap with the 21 Agent Skills Daloopa publishes as an
+    open-source Claude Code plugin. Three delivery channels, one skill catalog.
+  rest_operations: [list_investing_skills, retrieve_investing_skill]
+  packaged_skills: skills/_index.yml
+
+integrations:
+  note: Works with any MCP-compatible client; docs name these explicitly.
+  named_clients: [Claude, Claude Desktop, Cursor, Windsurf, Perplexity, OpenAI/ChatGPT]
+  openai_apps:
+    signal: >-
+      The MCP service OpenAPI declares GET /.well-known/openai-apps-challenge, indicating an OpenAI Apps
+      directory verification surface.
+  docs: https://docs.daloopa.com/docs/mcp-integrations
+
+partnerships:
+  docs: https://docs.daloopa.com/docs/partnerships
+  note: >-
+    Partner-only workflow for provisioning trial accounts for Daloopa MCP users, backed by
+    POST /api/v3/partnerships/user with BASE or PLUS monthly datapoint limits. Pre-accounts expire 30 days
+    after creation.
+
+source_attribution:
+  note: >-
+    Documented differentiator — "source location mapped to every output derived from a Daloopa datapoint".
+    Every value an agent returns can be traced to the exact spot in the originating SEC filing.
+
+cross_links:
+  crosswalk: mcp/daloopa-tool-crosswalk.yml
+  authentication: authentication/daloopa-authentication.yml
+  well_known: well-known/daloopa-well-known.yml
+  skills: skills/_index.yml
