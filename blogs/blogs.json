@@ -1,0 +1,21 @@
+{
+  "repo": "daloopa",
+  "feeds": [
+    {
+      "source": "https://docs.daloopa.com/docs/contact-us",
+      "feed_url": "https://docs.daloopa.com/docs/contact-us",
+      "title": "",
+      "saved": 0,
+      "method": "none"
+    },
+    {
+      "source": "https://daloopa.com/blog",
+      "feed_url": "https://daloopa.com/feed",
+      "title": "",
+      "saved": 1,
+      "method": "discovered"
+    }
+  ],
+  "post_count": 1,
+  "fetched": "2026-08-15T12:22:01Z"
+}
