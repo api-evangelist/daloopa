@@ -1,0 +1,291 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Daloopa MCP Service",
+    "version": "1.0.0"
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Auth",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Register Client",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Register Client"
+        },
+        {
+          "info": {
+            "name": "Authorize",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/authorize",
+            "params": [
+              {
+                "name": "client_id",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "redirect_uri",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "response_type",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "state",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "code_challenge",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "code_challenge_method",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "Authorize"
+        },
+        {
+          "info": {
+            "name": "Login",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "{{baseUrl}}/login",
+            "body": {
+              "type": "form-urlencoded",
+              "data": []
+            }
+          },
+          "docs": "Login"
+        },
+        {
+          "info": {
+            "name": "Sso Login",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "{{baseUrl}}/sso-login",
+            "body": {
+              "type": "form-urlencoded",
+              "data": []
+            }
+          },
+          "docs": "Sso Login"
+        },
+        {
+          "info": {
+            "name": "Sso Validation",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/mcp-sso-validation",
+            "params": [
+              {
+                "name": "code",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "state",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "sso_email",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "Sso Validation"
+        },
+        {
+          "info": {
+            "name": "Token",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "{{baseUrl}}/token",
+            "body": {
+              "type": "form-urlencoded",
+              "data": []
+            }
+          },
+          "docs": "Token"
+        },
+        {
+          "info": {
+            "name": "Api Key Token",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/token",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Api Key Token"
+        },
+        {
+          "info": {
+            "name": "Protected Resource Metadata",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/.well-known/oauth-protected-resource"
+          },
+          "docs": "RFC 9728 Protected Resource Metadata for MCP authorization discovery."
+        },
+        {
+          "info": {
+            "name": "Well Known",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/.well-known/oauth-authorization-server"
+          },
+          "docs": "Well Known"
+        },
+        {
+          "info": {
+            "name": "Well Known Openai Apps Challenge",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/.well-known/openai-apps-challenge"
+          },
+          "docs": "Well Known Openai Apps Challenge"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Consumption",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get datapoint consumption over a time range",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/consumption",
+            "params": [
+              {
+                "name": "start_at",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "end_at",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "Get datapoint consumption over a time range"
+        },
+        {
+          "info": {
+            "name": "List datapoint access events over a time range",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/consumption/events",
+            "params": [
+              {
+                "name": "start_at",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "end_at",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "List datapoint access events over a time range"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Default",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Root",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          },
+          "docs": "Root endpoint showing service information."
+        },
+        {
+          "info": {
+            "name": "Health Check",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health/"
+          },
+          "docs": "Health check endpoint."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

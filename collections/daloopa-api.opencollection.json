@@ -1,0 +1,1511 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Daloopa API",
+    "version": "2.0.0"
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Companies",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List Companies",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies",
+            "params": [
+              {
+                "name": "keyword",
+                "value": "",
+                "type": "query",
+                "description": "Filter companies by name or ticker symbol (case-insensitive)"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve paginated list of companies covered by Daloopa with an optional keyword filtering"
+        },
+        {
+          "info": {
+            "name": "Check Company Model Status",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/companies/status",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Check the data freshness signals for specified companies. Each company entry in the response distinguishes three timestamps:\n\n- `latest_datapoint_created_at`: when the latest publish notification for the company was created. Falls back to the company's live Excel model `created_at` when no active non-clientview notification exists.\n- `latest_datapoint_updated_at`: the latest data change for the company, computed as the max of the most recent DELETE event in FundamentalEventLog and the most recen"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Fundamentals",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Company Fundamental Data",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies/fundamentals",
+            "params": [
+              {
+                "name": "calendar_periods",
+                "value": "",
+                "type": "query",
+                "description": "List of calendar reporting periods to include. Mutually exclusive with `fiscal_periods`. Accepted formats: `YYYYQ[1-4]` (quarters), `YYYYH[1-2]` (half-years), or `YYYYFY` (fiscal year). Example: `?calendar_periods=2023Q4&calendar_periods=2024Q1`."
+              },
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the company."
+              },
+              {
+                "name": "created_at",
+                "value": "",
+                "type": "query",
+                "description": "Minimum creation timestamp (ISO-8601). Used together with `updated_at` to form an inclusive range; `created_at` must be ≤ `updated_at`."
+              },
+              {
+                "name": "document_id",
+                "value": "",
+                "type": "query",
+                "description": "Filter fundamentals to those from a specific document ID."
+              },
+              {
+                "name": "fiscal_periods",
+                "value": "",
+                "type": "query",
+                "description": "List of fiscal reporting periods to include. Mutually exclusive with `calendar_periods`. Accepted formats: `YYYYQ[1-4]` (quarters), `YYYYH[1-2]` (half-years), or `YYYYFY` (fiscal year). Example: `?fiscal_periods=2023Q4&fiscal_periods=2024Q1`."
+              },
+              {
+                "name": "include_derived",
+                "value": "",
+                "type": "query",
+                "description": "Whether to include derived fundamentals. `true` = include derived fundamentals, `false` = exclude derived fundamentals, omit for default behavior (excludes derived)."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              },
+              {
+                "name": "restated",
+                "value": "",
+                "type": "query",
+                "description": "Filter by restatement status. `true` = only restated values, `false` = only original values, omit to include both."
+              },
+              {
+                "name": "sections",
+                "value": "",
+                "type": "query",
+                "description": "Optional list of financial statement sections to filter by. Narrows the response to fundamentals whose finantial section matches one of the provided values."
+              },
+              {
+                "name": "series_ids",
+                "value": "",
+                "type": "query",
+                "description": "Optional list of series IDs to filter by. Example: `?series_ids=101&series_ids=205`."
+              },
+              {
+                "name": "unit",
+                "value": "",
+                "type": "query",
+                "description": "Optional target unit to convert values to. When omitted, values are returned as-reported. Values reported in a currency (e.g. dollars) or as a percentage are not convertible and are returned unchanged."
+              },
+              {
+                "name": "updated_at",
+                "value": "",
+                "type": "query",
+                "description": "Maximum update timestamp (ISO-8601). Used together with `created_at` to form an inclusive range; `created_at` must be ≤ `updated_at`."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve paginated fundamental financial data for a specific company and time periods."
+        },
+        {
+          "info": {
+            "name": "Get Fundamental Series",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies/fundamentals/series",
+            "params": [
+              {
+                "name": "ids",
+                "value": "",
+                "type": "query",
+                "description": "List of fundamental IDs to look up (max 100)"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Look up series and company context for up to 100 fundamental IDs. IDs not in the dataset visible to the user are silently omitted from the response."
+        },
+        {
+          "info": {
+            "name": "Get Fundamental Data Updates",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies/fundamental-updates",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the company"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return the results"
+              },
+              {
+                "name": "since",
+                "value": "",
+                "type": "query",
+                "description": "Timestamp to get updates since (ISO 8601 format)"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve updates and changes to fundamental financial data for a specific company since a given timestamp."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Documents",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Company Document Lookup",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/documents",
+            "params": [
+              {
+                "name": "calendar_quarters",
+                "value": "",
+                "type": "query",
+                "description": "One or more calendar quarters in YYYYQ# format. Repeat the parameter to filter on several at once (e.g., ?calendar_quarters=2024Q1&calendar_quarters=2024Q2). Mutually exclusive with `fiscal_quarters`."
+              },
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the company."
+              },
+              {
+                "name": "filing_type",
+                "value": "",
+                "type": "query",
+                "description": "Type of filing to filter by."
+              },
+              {
+                "name": "fiscal_quarters",
+                "value": "",
+                "type": "query",
+                "description": "One or more fiscal quarters in YYYYQ# format. Translated to the company's calendar quarters before filtering. Mutually exclusive with `calendar_quarters`."
+              },
+              {
+                "name": "has_fundamentals",
+                "value": "",
+                "type": "query",
+                "description": "When true, restrict the result set to documents that have at least one related Fundamentals row. When omitted or false, behavior is unchanged."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve paginated list of documents for a specific company, optionally filtered by quarter and filing type. Use `calendar_quarters` or `fiscal_quarters` (repeatable, mutually exclusive) to filter on one or more quarters; `fiscal_quarters` are translated to the company's calendar quarters before filtering. Each document in the response carries both `calendar_quarter` and `fiscal_quarter`. Results are ordered by filing date descending."
+        },
+        {
+          "info": {
+            "name": "Keyword Search",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/documents/keyword-search",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Performs keyword search across multiple documents and returns matches without positional information for faster response times.\n\n**Key Features:**\n- Faster than batch search (no positional data retrieval)\n- Each match includes a unique match_id\n- Use match_id with the positional-info endpoint to get positions on demand\n- Supports same filtering and search options as batch search\n\n**Use Cases:**\n- Initial search to find relevant documents quickly\n- When positional information is not immediately n"
+        },
+        {
+          "info": {
+            "name": "Retrieve Document",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/documents/:document_id",
+            "params": [
+              {
+                "name": "document_id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the document to retrieve."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve a specific document by its ID. Returns a signed URL for document access with expiration timestamp."
+        },
+        {
+          "info": {
+            "name": "Retrieve Document Metadata",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/documents/:document_id/metadata",
+            "params": [
+              {
+                "name": "document_id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the document."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Return structural metadata for a document: filing type, source document type, total character count, named sections with character counts, and a recommended_call hint that guides whether to fetch the whole document or a specific section next. The endpoint never returns the document body. Documents whose filing type is outside the allowlist return 200 with recommended_call set to not_supported and reason populated. Earnings call transcripts are excluded from whole-document access and return 403; "
+        },
+        {
+          "info": {
+            "name": "Retrieve Document Content",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/documents/:document_id/content",
+            "params": [
+              {
+                "name": "document_id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the document."
+              },
+              {
+                "name": "full_content",
+                "value": "",
+                "type": "query",
+                "description": "When true, max_characters is ignored and the full text (or full section) is returned with truncated=false."
+              },
+              {
+                "name": "max_characters",
+                "value": "",
+                "type": "query",
+                "description": "Cap on returned characters. Defaults to 100000. Hard ceiling is 1000000; values above the ceiling are rejected. When the resolved text is longer than max_characters, the first max_characters are returned and truncated is set to true."
+              },
+              {
+                "name": "section",
+                "value": "",
+                "type": "query",
+                "description": "Optional section name from the document's section index. When provided, only that section's text is returned. Use GET /api/v2/documents/{id}/metadata to discover valid section names."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Return the processed flat text of a supported document (10-K, 10-Q, 8-K, News Article, Others). The response is a flat shape with no pagination and no section list; callers that need the section list or the recommended_call hint use the /metadata endpoint, and callers that need the original document file use GET /api/v2/documents/{id}. By default the response is capped at max_characters (100000) and truncated=true is set when the cap is hit. Pass full_content=true to bypass the cap. Filing types"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Taxonomy",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List Taxonomy Metrics",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/taxonomy/metrics",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the company"
+              },
+              {
+                "name": "keywords",
+                "value": "",
+                "type": "query",
+                "description": "A list of keywords to filter the KPIs. Maximum of 15 keywords allowed."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return the results."
+              },
+              {
+                "name": "series_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the series"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve a list of all available Taxonomy Metrics. Optionally filter by a specific company and series."
+        },
+        {
+          "info": {
+            "name": "Retrieve Taxonomy Metric",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/taxonomy/metrics/:id",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the company"
+              },
+              {
+                "name": "id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the Taxonomy Metric"
+              },
+              {
+                "name": "industry_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the industry"
+              },
+              {
+                "name": "sector_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the sector"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve detailed information about a specific Taxonomy Metric by its unique identifier."
+        },
+        {
+          "info": {
+            "name": "Retrieve Taxonomy Industry Template",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/taxonomy/industry-template/:industry_id",
+            "params": [
+              {
+                "name": "industry_id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the IndustryClassification"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve an industry template for a given IndustryClassification, including associated sectors and active template metrics with associated company series."
+        },
+        {
+          "info": {
+            "name": "List Taxonomy Industries",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/taxonomy/industries",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "Return the industry for this company along with peer companies"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return the results."
+              },
+              {
+                "name": "sector_id",
+                "value": "",
+                "type": "query",
+                "description": "Filter industries belonging to the specified GICS sector"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve Ops industries (IndustryClassification) and their member companies. Optionally filter by company_id (returns that company's industry and peers) or sector_id."
+        },
+        {
+          "info": {
+            "name": "List Taxonomy Sectors",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/taxonomy/sectors",
+            "params": [
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return the results."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve Ops sectors and their associated Ops industries (IndustryClassification)."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Export",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Export Company Fundamentals",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/export/:ticker",
+            "params": [
+              {
+                "name": "output_format",
+                "value": "",
+                "type": "query",
+                "description": "Output file format, either 'csv' or 'parquet' (default: parquet)"
+              },
+              {
+                "name": "real_time",
+                "value": "",
+                "type": "query",
+                "description": "Fetch real-time data (default: false)"
+              },
+              {
+                "name": "show_historical_data",
+                "value": "",
+                "type": "query",
+                "description": "Include historical data in export (default: false)"
+              },
+              {
+                "name": "ticker",
+                "value": "",
+                "type": "path",
+                "description": "Company ticker symbol (e.g., AAPL, MSFT, AMZN)"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Export file with company fundamentals metadata for a company as Parquet or CSV. Returns Parquet by default; pass `output_format=csv` to receive CSV. Supports both historical and real-time data export."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Series",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Company Series Data",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies/series",
+            "params": [
+              {
+                "name": "calendar_periods",
+                "value": "",
+                "type": "query",
+                "description": "List of calendar periods to restrict returned series values (e.g., 2023Q1, 2023Q2). Mutually exclusive with `fiscal_periods` and `periods`."
+              },
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "Unique identifier for the company"
+              },
+              {
+                "name": "fiscal_periods",
+                "value": "",
+                "type": "query",
+                "description": "List of fiscal periods to restrict returned series values (e.g., 2023Q1, 2023Q2). Mutually exclusive with `calendar_periods` and `periods`."
+              },
+              {
+                "name": "include_derived",
+                "value": "",
+                "type": "query",
+                "description": "Whether to include derived series. `true` = include derived series, `false` = exclude derived series, omit for default behavior (excludes derived)."
+              },
+              {
+                "name": "keywords",
+                "value": "",
+                "type": "query",
+                "description": "List of keywords to filter series (max 15)"
+              },
+              {
+                "name": "periods",
+                "value": "",
+                "type": "query",
+                "description": "Deprecated: use `calendar_periods`. List of calendar periods (e.g., 2023Q1, 2023Q2)."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve financial series data for a specific company with optional filtering"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Data Warehouse",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Bulk Add Data Warehouse Company Subscriptions",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/companies/bulk-subscribe",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Add subscriptions to multiple companies for the authenticated user. This operation respects the user's subscription limit and syncs the local database. If the user has Snowflake and/or Databricks permissions, subscriptions are also synced to the corresponding data warehouses. If the number of requested companies exceeds the user's remaining subscription slots, only the first N companies that fit within the limit will be processed; the rest will be returned in 'skipped_limit_exceeded'."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Download",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Company Model Download URL",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/download-company-model",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the company (one of company_id / isin / ticker is required)"
+              },
+              {
+                "name": "email",
+                "value": "",
+                "type": "query",
+                "description": "Email address to send the download link (optional if handled elsewhere)"
+              },
+              {
+                "name": "isin",
+                "value": "",
+                "type": "query",
+                "description": "ISIN for the target company (alternative identifier)"
+              },
+              {
+                "name": "model_type",
+                "value": "",
+                "type": "query",
+                "description": "Type of model to download (e.g., 'industry' or 'company')"
+              },
+              {
+                "name": "ticker",
+                "value": "",
+                "type": "query",
+                "description": "Ticker symbol for the target company (alternative identifier)"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Generate a pre-signed URL to download the Excel model file for a specific company"
+        },
+        {
+          "info": {
+            "name": "Get Industry Model Download URL",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/download-industry-model",
+            "params": [
+              {
+                "name": "email",
+                "value": "",
+                "type": "query",
+                "description": "Email address where the download link should be sent"
+              },
+              {
+                "name": "model_id",
+                "value": "",
+                "type": "query",
+                "description": "The unique identifier of the industry model"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Generate a pre-signed URL to download the Excel model file for a specific industry model"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Industry Models",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Company Industry Model Mappings",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/industry-company-models",
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve the mapping between companies and their associated industry models, including ISIN identifiers and model metadata."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Investing Skills",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List Investing Skills",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/investing-skills",
+            "params": [
+              {
+                "name": "category",
+                "value": "",
+                "type": "query",
+                "description": "Optional category to filter investing skills by. When omitted, skills across all categories are returned."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve the catalog of available investing skills — reusable, model-initiated analytical workflows (earnings review, DCF, comps, etc.). Results can optionally be filtered by category."
+        },
+        {
+          "info": {
+            "name": "Retrieve Investing Skill",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/investing-skills/:investing_skill_name",
+            "params": [
+              {
+                "name": "investing_skill_name",
+                "value": "",
+                "type": "path",
+                "description": "The unique name of the investing skill (e.g. 'earnings', 'dcf')."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve a single investing skill by its unique name, including its full prompt content, declared inputs, and required tools."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Consumption",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Datapoint Consumption by date range",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/consumption",
+            "params": [
+              {
+                "name": "end_at",
+                "value": "",
+                "type": "query",
+                "description": "End date (YYYY-MM-DD) of the inclusive window. Defaults to today's date (and current time) if omitted."
+              },
+              {
+                "name": "start_at",
+                "value": "",
+                "type": "query",
+                "description": "Start date (YYYY-MM-DD) of the inclusive window. Defaults to the first day of the current month if omitted."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Return the user's datapoint consumption within a date window and the user's effective monthly datapoint limit.\n\n**Inputs**\n- `start_at` and `end_at` are both dates (in format `YYYY-MM-DD`).\n- Internally, `start_at` is expanded to the start of the day of that date in the current Django timezone; `end_at` is expanded to the end of the day of that date in the current Django timezone.\n\n**Defaults**\n- If `start_at` is omitted, it defaults to the first day of the current month at 00:00:00 (current tim"
+        },
+        {
+          "info": {
+            "name": "List Datapoint Access Events by date range",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/consumption/events",
+            "params": [
+              {
+                "name": "end_at",
+                "value": "",
+                "type": "query",
+                "description": "End date (YYYY-MM-DD) of the inclusive window. Defaults to today's date (and current time) if omitted."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              },
+              {
+                "name": "start_at",
+                "value": "",
+                "type": "query",
+                "description": "Start date (YYYY-MM-DD) of the inclusive window. Defaults to the first day of the current month if omitted."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Return the individual datapoint access events for the authenticated user within a date window.\n\n**Inputs**\n- `start_at` and `end_at` are **dates** (`YYYY-MM-DD`).\n- Internally, `start_at` expands to the start of that day in the current Django timezone; `end_at` expands to the end of that day in the current Django timezone.\n\n**Defaults**\n- If `start_at` is omitted, it defaults to the **first day of the current month** at 00:00:00 (current timezone).\n- If `end_at` is omitted, it defaults to **now*"
+        },
+        {
+          "info": {
+            "name": "List companies accessed by the user",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/consumption/companies",
+            "params": [
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Return the companies the authenticated user has previously pulled data from.\n\n**Behavior**\n- Returns one entry per company the user has accessed.\n- Results are ordered by `company_id` ascending.\n\n**Response**\n- A paginated list of accessed companies.\n- Each record exposes `company_id`, `company_name` and `ticker` of the company, plus `first_accessed_at` (the first time the user accessed it)."
+        },
+        {
+          "info": {
+            "name": "Get series consumption for a company",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/consumption/series-access",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "query",
+                "description": "The company ID to query series consumption for."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Return the series consumption data for the authenticated user for a given company.\n\n**Inputs**\n- `company_id` is **required** (integer).\n\n**Response**\n- The user's current series-per-company limit.\n- The number of unique series the user has accessed for the company.\n- A list of accessed series with their IDs and names."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Market Data",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Company Stock Prices",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies/:company_id/stock-prices",
+            "params": [
+              {
+                "name": "adjusted",
+                "value": "",
+                "type": "query",
+                "description": "Return adjusted prices when `true`; raw prices when `false`. Defaults to `false`. Adjusted prices restate history onto today's per-share scale (the forward-adjustment convention): OHLC are multiplied by the cumulative factor of every stock split, cash dividend (including specials), and the price effect of spinoffs and distributions with an ex-date after the row's date. Volume is adjusted only for share-count-changing splits and rounded to whole shares. Not provided: valuation of spun-off entities and reconstructed total-return series."
+              },
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the company."
+              },
+              {
+                "name": "dates",
+                "value": "",
+                "type": "query",
+                "description": "Specific dates to retrieve data for, passed as repeated keys (`?dates=2024-01-02&dates=2024-01-03`), up to 100 per request. Mutually exclusive with `start_date`/`end_date`; one of `dates` or `start_date` is required."
+              },
+              {
+                "name": "end_date",
+                "value": "",
+                "type": "query",
+                "description": "End date of the desired market data window (YYYY-MM-DD)."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              },
+              {
+                "name": "start_date",
+                "value": "",
+                "type": "query",
+                "description": "Start date of the desired market data window (YYYY-MM-DD). Required unless `dates` is provided."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve paginated daily OHLCV (Open, High, Low, Close, Volume) stock price data for a specific company."
+        },
+        {
+          "info": {
+            "name": "Get Company Stock Price Adjustment Factors",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/companies/:company_id/adjustment-factors",
+            "params": [
+              {
+                "name": "company_id",
+                "value": "",
+                "type": "path",
+                "description": "The unique identifier of the company."
+              },
+              {
+                "name": "end_date",
+                "value": "",
+                "type": "query",
+                "description": "End ex-date of the desired factor window (YYYY-MM-DD, inclusive)."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return results."
+              },
+              {
+                "name": "start_date",
+                "value": "",
+                "type": "query",
+                "description": "Start ex-date of the desired factor window (YYYY-MM-DD, inclusive)."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve paginated corporate-action adjustment factors for a specific company, ordered by ex-date. These are the same factors behind `adjusted=true` on the stock prices endpoint: to adjust a historical price, multiply it by every factor whose `ex_date` falls strictly after the price's date (a factor no longer applies on its own ex-date). Volume is adjusted only by `split` factors. Rows with `factor_type` `other` are informational and are not applied to adjusted prices."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Snowflake",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Add Snowflake Company Subscription",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/snowflake/company-subscription",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Add a subscription to a company for the authenticated user. This operation updates both Snowflake and the local database."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Databricks",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Add Databricks Company Subscription",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/databricks/company-subscription",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Add a subscription to a company for the authenticated user. This operation updates both Databricks and the local database."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Webhooks",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List Webhooks",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/webhooks",
+            "params": [
+              {
+                "name": "active",
+                "value": "",
+                "type": "query",
+                "description": "Filter by active status."
+              },
+              {
+                "name": "event_type",
+                "value": "",
+                "type": "query",
+                "description": "Filter by event type."
+              },
+              {
+                "name": "is_test",
+                "value": "",
+                "type": "query",
+                "description": "Filter by test flag."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return per page."
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "The initial index from which to return the results."
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "List all webhooks belonging to the authenticated user's API key. Supports optional filtering by event_type, active, and is_test query parameters."
+        },
+        {
+          "info": {
+            "name": "Create Webhook",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/webhooks",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Register a new webhook for a given event type. Auth secrets are encrypted before storage. Limited to 10 webhooks per API key."
+        },
+        {
+          "info": {
+            "name": "Retrieve Webhook",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/webhooks/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Retrieve a single webhook by ID. The webhook must belong to the authenticated user's API key."
+        },
+        {
+          "info": {
+            "name": "Update Webhook",
+            "type": "http"
+          },
+          "http": {
+            "method": "PATCH",
+            "url": "https://app.daloopa.com/api/v3/webhooks/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Update an existing webhook's configuration. All fields are optional; only the provided fields will be modified."
+        },
+        {
+          "info": {
+            "name": "Delete Webhook",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://app.daloopa.com/api/v3/webhooks/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Permanently delete an existing webhook. The webhook must belong to the authenticated user's API key."
+        },
+        {
+          "info": {
+            "name": "List Webhook Event Types",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/webhooks/event-types",
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Returns the available webhook event types. Use this endpoint to discover which event types can be used when configuring or testing webhooks."
+        },
+        {
+          "info": {
+            "name": "Get Sample Payload for Webhook",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/webhooks/:webhook_id/sample-payload",
+            "params": [
+              {
+                "name": "webhook_id",
+                "value": "",
+                "type": "path",
+                "description": "The ID of the webhook"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Returns a sample payload matching the webhook's configured event type. The payload uses static example data and includes 'test': true. Fundamental events (clientview_updated, incremental_update, series_updated) carry a 'series' field; document_added carries a 'document' object instead. Only the webhook owner can access this endpoint."
+        },
+        {
+          "info": {
+            "name": "Test Webhook Delivery",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/webhooks/:webhook_id/test",
+            "params": [
+              {
+                "name": "webhook_id",
+                "value": "",
+                "type": "path",
+                "description": "The ID of the webhook to test"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Triggers a synchronous test delivery to the webhook's configured URL using a sample payload with 'test': true. Returns immediate feedback including the HTTP status code, response body (truncated to 2000 chars), and round-trip duration in milliseconds. Only the webhook owner can trigger a test delivery. Uses a 10-second timeout."
+        },
+        {
+          "info": {
+            "name": "List Webhook Delivery History",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://app.daloopa.com/api/v3/webhooks/deliveries",
+            "params": [
+              {
+                "name": "is_test",
+                "value": "",
+                "type": "query",
+                "description": "Filter by test (true) or production (false) deliveries"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of deliveries to return (default 500, max 500)"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Number of deliveries to skip for pagination"
+              },
+              {
+                "name": "webhook_id",
+                "value": "",
+                "type": "query",
+                "description": "Filter deliveries to a specific webhook (optional)"
+              }
+            ],
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Returns delivery history in reverse chronological order. Each entry includes the timestamp, event type, company ID, response status, response body (truncated to 1000 characters), test flag, and round-trip duration in milliseconds. Supports standard DRF limit/offset pagination (default page size: 500, max: 500). Optionally filter by webhook_id and/or is_test. Only deliveries for webhooks owned by the authenticated user are returned."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Partnership",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Create Partnership User",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://app.daloopa.com/api/v3/partnerships/user",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "basic",
+              "username": "{{username}}",
+              "password": "{{password}}"
+            }
+          },
+          "docs": "Create a partnership pre-account for the given email under the authenticated API key's partnership program. A sign-up email is sent to the user with a link to complete account creation. The pre-account expires 30 days after creation. The monthly datapoint limit is determined by the chosen plan (BASE or PLUS)."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
