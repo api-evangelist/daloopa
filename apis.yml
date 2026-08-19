@@ -13,7 +13,7 @@ url: https://raw.githubusercontent.com/api-evangelist/daloopa/refs/heads/main/ap
 image: https://avatars.githubusercontent.com/u/42851514?v=4
 x-type: company
 x-source: harvest:secondary-market
-specificationVersion: '0.21'
+specificationVersion: '0.23'
 created: '2026-08-11'
 modified: '2026-08-11'
 tags:
