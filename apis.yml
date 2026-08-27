@@ -50,35 +50,16 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 apis:
-- name: Daloopa API v3
-  description: >-
-    REST API over Daloopa's fundamental dataset — company discovery, fundamental series and values,
-    calendar/fiscal period handling, taxonomy metrics and industry templates, SEC document lookup,
-    document content retrieval and keyword search, daily OHLCV stock prices, Excel model downloads,
-    Parquet/CSV bulk export, consumption metering, data-warehouse subscription management, and a
-    self-service webhook surface. 41 operations across 16 tags. Authenticated with HTTP Basic using
-    base64(email:api_key).
+- aid: daloopa:daloopa-auth-api
+  name: Daloopa Auth API
+  description: The Auth API from Daloopa — 10 operation(s) for auth.
   humanURL: https://docs.daloopa.com/docs/overview
   baseURL: https://app.daloopa.com/api/v3
   tags:
-  - Financial Data
-  - Fundamental Data
-  - Market Data
-  - Investment Research
-  - SEC Filings
-  - Earnings
-  - Webhook
-  tags_raw:
-  - financial-data
-  - fundamental-data
-  - market-data
-  - investment-research
-  - sec-filings
-  - earnings
-  - webhooks
+  - Auth
   properties:
   - type: OpenAPI
-    url: openapi/daloopa-api-openapi.yml
+    url: openapi/daloopa-auth-api-openapi.yml
   - type: Documentation
     url: https://docs.daloopa.com/docs/overview
   - type: APIReference
@@ -95,8 +76,6 @@ apis:
     url: errors/daloopa-problem-types.yml
   - type: DataModel
     url: data-model/daloopa-data-model.yml
-  - type: Overlay
-    url: overlays/daloopa-api-security-overlay.yaml
   - type: Webhooks
     url: asyncapi/daloopa-webhooks.yml
   - type: Sandbox
@@ -105,32 +84,6 @@ apis:
     url: changelog/daloopa-changelog.yml
   - type: ChangeLog
     url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
-- name: Daloopa MCP Server
-  description: >-
-    Hosted remote MCP server (Streamable HTTP) exposing nine tools over the same fundamental dataset —
-    discover_companies, discover_company_series, discover_company_documents, get_company_fundamentals,
-    get_document_content, search_documents, get_stock_prices, list_skills and get_skill. Every returned
-    datapoint carries its source location. Authenticated via MCP OAuth 2.1 with dynamic client
-    registration and PKCE, via a 24-hour bearer token minted from an API key, or via an X-API-KEY header.
-  humanURL: https://docs.daloopa.com/docs/daloopa-mcp
-  baseURL: https://mcp.daloopa.com/server/mcp
-  tags:
-  - MCP
-  - agent-native
-  - Financial Data
-  - Fundamental Data
-  - Investment Research
-  tags_raw:
-  - mcp
-  - agent-native
-  - financial-data
-  - fundamental-data
-  - investment-research
-  properties:
-  - type: MCPServer
-    url: mcp/daloopa-mcp.yml
-  - type: MCPServer
-    url: https://mcp.daloopa.com/server/mcp
   - type: ToolCrosswalk
     url: mcp/daloopa-tool-crosswalk.yml
   - type: Documentation
@@ -139,11 +92,807 @@ apis:
     url: https://docs.daloopa.com/docs/mcp-authentication
   - type: WellKnown
     url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-companies-api
+  name: Daloopa Companies API
+  description: Company Data and Metadata
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Companies
+  properties:
   - type: OpenAPI
-    url: openapi/daloopa-mcp-service-openapi.json
+    url: openapi/daloopa-companies-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-consumption-api
+  name: Daloopa Consumption API
+  description: The Consumption API from Daloopa — 6 operation(s) for consumption.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Consumption
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-consumption-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-daloopa-mcp-service-api
+  name: Daloopa Daloopa MCP Service API
+  description: The Daloopa MCP Service API from Daloopa — 1 operation(s) for daloopa mcp service.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Daloopa MCP Service
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-daloopa-mcp-service-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-data-warehouse-api
+  name: Daloopa Data Warehouse API
+  description: The Data Warehouse API from Daloopa — 1 operation(s) for data warehouse.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Data Warehouse
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-data-warehouse-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-databricks-api
+  name: Daloopa Databricks API
+  description: The Databricks API from Daloopa — 1 operation(s) for databricks.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Databricks
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-databricks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-documents-api
+  name: Daloopa Documents API
+  description: The Documents API from Daloopa — 5 operation(s) for documents.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Documents
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-documents-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-download-api
+  name: Daloopa Download API
+  description: The Download API from Daloopa — 2 operation(s) for download.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Download
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-download-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-export-api
+  name: Daloopa Export API
+  description: The Export API from Daloopa — 1 operation(s) for export.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Export
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-export-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-fundamentals-api
+  name: Daloopa Fundamentals API
+  description: Financial Fundamentals Data
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Fundamentals
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-fundamentals-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-health-api
+  name: Daloopa Health API
+  description: The Health API from Daloopa — 1 operation(s) for health.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Health
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-health-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-industry-models-api
+  name: Daloopa Industry Models API
+  description: The Industry Models API from Daloopa — 1 operation(s) for industry models.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Industry Models
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-industry-models-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-investing-skills-api
+  name: Daloopa Investing Skills API
+  description: The Investing Skills API from Daloopa — 2 operation(s) for investing skills.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Investing Skills
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-investing-skills-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-market-data-api
+  name: Daloopa Market Data API
+  description: The Market Data API from Daloopa — 2 operation(s) for market data.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Market Data
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-market-data-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-partnership-api
+  name: Daloopa Partnership API
+  description: The Partnership API from Daloopa — 1 operation(s) for partnership.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Partnership
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-partnership-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-series-api
+  name: Daloopa Series API
+  description: The Series API from Daloopa — 1 operation(s) for series.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Series
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-series-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-snowflake-api
+  name: Daloopa Snowflake API
+  description: The Snowflake API from Daloopa — 1 operation(s) for snowflake.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Snowflake
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-snowflake-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-taxonomy-api
+  name: Daloopa Taxonomy API
+  description: The Taxonomy API from Daloopa — 5 operation(s) for taxonomy.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Taxonomy
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-taxonomy-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
+  - type: APIReference
+    url: https://mcp.daloopa.com/redoc
+- aid: daloopa:daloopa-webhooks-api
+  name: Daloopa Webhooks API
+  description: The Webhooks API from Daloopa — 6 operation(s) for webhooks.
+  humanURL: https://docs.daloopa.com/docs/overview
+  baseURL: https://app.daloopa.com/api/v3
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/daloopa-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/overview
+  - type: APIReference
+    url: https://docs.daloopa.com/reference/companies_list_v3
+  - type: GettingStarted
+    url: https://docs.daloopa.com/docs/api-authentication
+  - type: Authentication
+    url: authentication/daloopa-authentication.yml
+  - type: Conventions
+    url: conventions/daloopa-conventions.yml
+  - type: RateLimits
+    url: rate-limits/daloopa-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/daloopa-problem-types.yml
+  - type: DataModel
+    url: data-model/daloopa-data-model.yml
+  - type: Webhooks
+    url: asyncapi/daloopa-webhooks.yml
+  - type: Sandbox
+    url: sandbox/daloopa-sandbox.yml
+  - type: ChangeLog
+    url: changelog/daloopa-changelog.yml
+  - type: ChangeLog
+    url: https://docs.daloopa.com/docs/daloopa-api-v3-release-notes-migration-guide
+  - type: ToolCrosswalk
+    url: mcp/daloopa-tool-crosswalk.yml
+  - type: Documentation
+    url: https://docs.daloopa.com/docs/daloopa-mcp
+  - type: Authentication
+    url: https://docs.daloopa.com/docs/mcp-authentication
+  - type: WellKnown
+    url: well-known/daloopa-well-known.yml
   - type: APIReference
     url: https://mcp.daloopa.com/redoc
 common:
+- type: Overlay
+  url: overlays/daloopa-api-security-overlay.yaml
+- type: MCPServer
+  url: mcp/daloopa-mcp.yml
+- type: MCPServer
+  url: https://mcp.daloopa.com/server/mcp
 - type: Website
   url: https://daloopa.com/
 - type: DeveloperPortal
