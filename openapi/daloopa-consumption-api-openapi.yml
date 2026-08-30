@@ -1,0 +1,749 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Consumption API
+  version: '1.0'
+  description: 'Operations tagged Consumption across 2 of this provider''s published API definitions: daloopa-api-openapi.yml, daloopa-mcp-service-openapi.json. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Consumption
+paths:
+  /api/v3/consumption:
+    get:
+      operationId: get_datapoint_consumption
+      description: 'Return the user''s datapoint consumption within a date window and the user''s effective monthly datapoint limit.
+
+
+        **Inputs**
+
+        - `start_at` and `end_at` are both dates (in format `YYYY-MM-DD`).
+
+        - Internally, `start_at` is expanded to the start of the day of that date in the current Django timezone; `end_at` is expanded to the end of the day of that date in the current Django timezone.
+
+
+        **Defaults**
+
+        - If `start_at` is omitted, it defaults to the first day of the current month at 00:00:00 (current timezone).
+
+        - If `end_at` is omitted, it defaults to now (the current datetime in the current timezone).
+
+
+        **Behavior**
+
+        - The window is inclusive: `start_at ≤ timestamp ≤ end_at`.
+
+
+        **Response**
+
+        - `monthly_limit` (string): `''Unlimited''` if there is no limit for the user, the numeric limit as a string otherwise.
+
+        - `consumption` (integer): total datapoints accessed in the window.
+
+        - `initial_date` / `final_date` (date): the date components of the resolved `start_at` and `end_at` values for the windows'
+      summary: Get Datapoint Consumption by date range
+      parameters:
+      - in: query
+        name: end_at
+        schema:
+          type: string
+          format: date
+        description: End date (YYYY-MM-DD) of the inclusive window. Defaults to today's date (and current time) if omitted.
+        examples:
+          WindowEnd:
+            value: '2025-06-30'
+            summary: Window End
+            description: Stop counting at June 30, 2025, at the end of the day.
+      - in: query
+        name: start_at
+        schema:
+          type: string
+          format: date
+        description: Start date (YYYY-MM-DD) of the inclusive window. Defaults to the first day of the current month if omitted.
+        examples:
+          WindowStart:
+            value: '2025-06-01'
+            summary: Window Start
+            description: Begin counting from June 1, 2025, at the start of the day.
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumption'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    servers:
+    - url: https://app.daloopa.com
+      description: Production
+  /api/v3/consumption/events:
+    get:
+      operationId: list_datapoint_access_events
+      description: 'Return the individual datapoint access events for the authenticated user within a date window.
+
+
+        **Inputs**
+
+        - `start_at` and `end_at` are **dates** (`YYYY-MM-DD`).
+
+        - Internally, `start_at` expands to the start of that day in the current Django timezone; `end_at` expands to the end of that day in the current Django timezone.
+
+
+        **Defaults**
+
+        - If `start_at` is omitted, it defaults to the **first day of the current month** at 00:00:00 (current timezone).
+
+        - If `end_at` is omitted, it defaults to **now** (current datetime in the current timezone).
+
+
+        **Behavior**
+
+        - The window is **inclusive**: `start_at ≤ timestamp ≤ end_at`.
+
+        - Results are ordered by `timestamp` ascending.
+
+
+        **Response**
+
+        - A paginated list of datapoint access events.'
+      summary: List Datapoint Access Events by date range
+      parameters:
+      - in: query
+        name: end_at
+        schema:
+          type: string
+          format: date
+        description: End date (YYYY-MM-DD) of the inclusive window. Defaults to today's date (and current time) if omitted.
+        examples:
+          WindowEnd:
+            value: '2025-06-30'
+            summary: Window End
+            description: Include events through June 30, 2025 (end of day, current timezone).
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: start_at
+        schema:
+          type: string
+          format: date
+        description: Start date (YYYY-MM-DD) of the inclusive window. Defaults to the first day of the current month if omitted.
+        examples:
+          WindowStart:
+            value: '2025-06-01'
+            summary: Window Start
+            description: Begin listing events from June 1, 2025 (start of day, current timezone).
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConsumptionEventList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    servers:
+    - url: https://app.daloopa.com
+      description: Production
+  /api/v3/consumption/companies:
+    get:
+      operationId: list_accessed_companies
+      description: 'Return the companies the authenticated user has previously pulled data from.
+
+
+        **Behavior**
+
+        - Returns one entry per company the user has accessed.
+
+        - Results are ordered by `company_id` ascending.
+
+
+        **Response**
+
+        - A paginated list of accessed companies.
+
+        - Each record exposes `company_id`, `company_name` and `ticker` of the company, plus `first_accessed_at` (the first time the user accessed it).'
+      summary: List companies accessed by the user
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAccessedCompanyList'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    servers:
+    - url: https://app.daloopa.com
+      description: Production
+  /api/v3/consumption/series-access:
+    get:
+      operationId: get_series_consumption
+      description: 'Return the series consumption data for the authenticated user for a given company.
+
+
+        **Inputs**
+
+        - `company_id` is **required** (integer).
+
+
+        **Response**
+
+        - The user''s current series-per-company limit.
+
+        - The number of unique series the user has accessed for the company.
+
+        - A list of accessed series with their IDs and names.'
+      summary: Get series consumption for a company
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The company ID to query series consumption for.
+        required: true
+        examples:
+          CompanyID:
+            value: 123
+            summary: Company ID
+            description: Query series consumption for company 123.
+      tags:
+      - Consumption
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesConsumption'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    servers:
+    - url: https://app.daloopa.com
+      description: Production
+  /consumption:
+    get:
+      tags:
+      - Consumption
+      summary: Get datapoint consumption over a time range
+      operationId: get_consumption_consumption_get
+      parameters:
+      - name: start_at
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Start At
+      - name: end_at
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: End At
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumptionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /consumption/events:
+    get:
+      tags:
+      - Consumption
+      summary: List datapoint access events over a time range
+      operationId: list_consumption_events_consumption_events_get
+      parameters:
+      - name: start_at
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Start At
+      - name: end_at
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: End At
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 500
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumptionEventsResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Consumption:
+      type: object
+      properties:
+        monthly_limit:
+          type: string
+          description: Monthly datapoint consumption limit for the account
+        consumption:
+          type: integer
+          description: Number of datapoints consumed within the requested window
+        initial_date:
+          type: string
+          format: date
+          description: Start date used to calculate consumption
+        final_date:
+          type: string
+          format: date
+          description: End date used to calculate consumption
+      required:
+      - consumption
+      - final_date
+      - initial_date
+      - monthly_limit
+    PaginatedConsumptionEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumptionEvent'
+    ConsumptionEvent:
+      type: object
+      properties:
+        source:
+          type: string
+          readOnly: true
+          description: Origin of the datapoint consumption event
+        number_of_datapoints:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+          description: Number of datapoints consumed in the event
+        user_identifier:
+          type: string
+          readOnly: true
+          description: External identifier for the user who triggered the event
+        timestamp:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the consumption event occurred
+      required:
+      - number_of_datapoints
+      - source
+      - timestamp
+      - user_identifier
+    AccessedCompany:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the user has accessed
+        company_name:
+          type:
+          - string
+          - 'null'
+          description: Name of the company
+        ticker:
+          type:
+          - string
+          - 'null'
+          description: Ticker symbol of the company
+        first_accessed_at:
+          type: string
+          format: date-time
+          description: Timestamp of the first time the user accessed the company
+      required:
+      - company_id
+      - company_name
+      - first_accessed_at
+      - ticker
+    AccessedSeries:
+      type: object
+      properties:
+        series_id:
+          type: integer
+          readOnly: true
+        full_series_name:
+          type: string
+          readOnly: true
+      required:
+      - full_series_name
+      - series_id
+    PaginatedAccessedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedCompany'
+    SeriesConsumption:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          readOnly: true
+        current_series_per_company_limit:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        number_of_series_accessed_for_company:
+          type: integer
+          readOnly: true
+        series_accessed:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedSeries'
+          readOnly: true
+      required:
+      - company_id
+      - current_series_per_company_limit
+      - number_of_series_accessed_for_company
+      - series_accessed
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ConsumptionResponse:
+      properties:
+        monthly_limit:
+          type: string
+          title: Monthly Limit
+        consumption:
+          type: integer
+          title: Consumption
+        initial_date:
+          type: string
+          format: date
+          title: Initial Date
+        final_date:
+          type: string
+          format: date
+          title: Final Date
+      type: object
+      required:
+      - monthly_limit
+      - consumption
+      - initial_date
+      - final_date
+      title: ConsumptionResponse
+    ConsumptionEvent_2:
+      properties:
+        source:
+          type: string
+          title: Source
+        number_of_datapoints:
+          type: integer
+          title: Number Of Datapoints
+        user_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Identifier
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+      type: object
+      required:
+      - source
+      - number_of_datapoints
+      - timestamp
+      title: ConsumptionEvent
+    ConsumptionEventsResponse:
+      properties:
+        count:
+          type: integer
+          title: Count
+        results:
+          items:
+            $ref: '#/components/schemas/ConsumptionEvent_2'
+          type: array
+          title: Results
+      type: object
+      required:
+      - count
+      - results
+      title: ConsumptionEventsResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'
+x-refined-from:
+- daloopa-api-openapi.yml
+- daloopa-mcp-service-openapi.json

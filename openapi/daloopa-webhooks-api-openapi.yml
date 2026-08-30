@@ -1,0 +1,808 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Webhooks API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Webhooks
+paths:
+  /api/v3/webhooks:
+    get:
+      operationId: list_webhooks
+      description: List all webhooks belonging to the authenticated user's API key. Supports optional filtering by event_type, active, and is_test query parameters.
+      summary: List Webhooks
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+        description: Filter by active status.
+      - in: query
+        name: event_type
+        schema:
+          type: string
+        description: Filter by event type.
+      - in: query
+        name: is_test
+        schema:
+          type: boolean
+        description: Filter by test flag.
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWebhookFullReadList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    post:
+      operationId: create_webhook
+      description: Register a new webhook for a given event type. Auth secrets are encrypted before storage. Limited to 10 webhooks per API key.
+      summary: Create Webhook
+      tags:
+      - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+            examples:
+              CreateWithAuthentication:
+                value:
+                  url: https://example.com/webhook
+                  event_type: clientview_updated
+                  header_name: Authorization
+                  prefix: Bearer
+                  auth_secret: your-secret-token
+                  is_test: false
+                summary: Create with authentication
+                description: Create a webhook with custom auth header
+              CreateWithMinimalFields:
+                value:
+                  url: https://example.com/webhook
+                  event_type: incremental_update
+                  is_test: false
+                summary: Create with minimal fields
+                description: Create a webhook with only the required fields
+              CreateADocumentAddedWebhook:
+                value:
+                  url: https://example.com/webhook
+                  event_type: document_added
+                  is_test: false
+                summary: Create a document_added webhook
+                description: Subscribe to notifications when a new document is added for a followed company
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookFullRead'
+              examples:
+                CreateWithAuthentication:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: clientview_updated
+                    header_name: Authorization
+                    prefix: Bearer
+                    auth_secret: your-secret-token
+                    is_test: false
+                  summary: Create with authentication
+                  description: Create a webhook with custom auth header
+                CreateWithMinimalFields:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: incremental_update
+                    is_test: false
+                  summary: Create with minimal fields
+                  description: Create a webhook with only the required fields
+                CreateADocumentAddedWebhook:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: document_added
+                    is_test: false
+                  summary: Create a document_added webhook
+                  description: Subscribe to notifications when a new document is added for a followed company
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/{id}:
+    get:
+      operationId: retrieve_webhook
+      description: Retrieve a single webhook by ID. The webhook must belong to the authenticated user's API key.
+      summary: Retrieve Webhook
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookFullRead'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    patch:
+      operationId: update_webhook
+      description: Update an existing webhook's configuration. All fields are optional; only the provided fields will be modified.
+      summary: Update Webhook
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWebhookUpdateRequest'
+            examples:
+              UpdateWebhookURL:
+                value:
+                  url: https://example.com/new-webhook-endpoint
+                summary: Update webhook URL
+                description: Change the target URL of an existing webhook
+              UpdateMultipleFields:
+                value:
+                  url: https://example.com/webhook
+                  event_type: clientview_updated
+                  is_test: false
+                  active: true
+                  header_name: Authorization
+                  prefix: Bearer
+                  auth_secret: new-secret-token
+                summary: Update multiple fields
+                description: Update several webhook fields at once
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWebhookUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWebhookUpdateRequest'
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookFullRead'
+              examples:
+                UpdateWebhookURL:
+                  value:
+                    url: https://example.com/new-webhook-endpoint
+                  summary: Update webhook URL
+                  description: Change the target URL of an existing webhook
+                UpdateMultipleFields:
+                  value:
+                    url: https://example.com/webhook
+                    event_type: clientview_updated
+                    is_test: false
+                    active: true
+                    header_name: Authorization
+                    prefix: Bearer
+                    auth_secret: new-secret-token
+                  summary: Update multiple fields
+                  description: Update several webhook fields at once
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+    delete:
+      operationId: delete_webhook
+      description: Permanently delete an existing webhook. The webhook must belong to the authenticated user's API key.
+      summary: Delete Webhook
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/event-types:
+    get:
+      operationId: list_webhook_types
+      description: Returns the available webhook event types. Use this endpoint to discover which event types can be used when configuring or testing webhooks.
+      summary: List Webhook Event Types
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookEventType'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/{webhook_id}/sample-payload:
+    get:
+      operationId: get_webhook_sample_payload
+      description: 'Returns a sample payload matching the webhook''s configured event type. The payload uses static example data and includes ''test'': true. Fundamental events (clientview_updated, incremental_update, series_updated) carry a ''series'' field; document_added carries a ''document'' object instead. Only the webhook owner can access this endpoint.'
+      summary: Get Sample Payload for Webhook
+      parameters:
+      - in: path
+        name: webhook_id
+        schema:
+          type: integer
+        description: The ID of the webhook
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  test:
+                    type: boolean
+                  event_type:
+                    type: string
+                  company_id:
+                    type: integer
+                  series:
+                    type: object
+                    description: Present for fundamental events.
+                  document:
+                    type: object
+                    description: Present for document_added events. Carries the document's raw filing_type and document_type exactly as returned by GET /documents (no normalization).
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/{webhook_id}/test:
+    post:
+      operationId: test_webhook_delivery
+      description: 'Triggers a synchronous test delivery to the webhook''s configured URL using a sample payload with ''test'': true. Returns immediate feedback including the HTTP status code, response body (truncated to 2000 chars), and round-trip duration in milliseconds. Only the webhook owner can trigger a test delivery. Uses a 10-second timeout.'
+      summary: Test Webhook Delivery
+      parameters:
+      - in: path
+        name: webhook_id
+        schema:
+          type: integer
+        description: The ID of the webhook to test
+        required: true
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status_code:
+                    type:
+                    - integer
+                    - 'null'
+                  response_body:
+                    type: string
+                  duration_ms:
+                    type: integer
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/webhooks/deliveries:
+    get:
+      operationId: list_webhook_deliveries
+      description: 'Returns delivery history in reverse chronological order. Each entry includes the timestamp, event type, company ID, response status, response body (truncated to 1000 characters), test flag, and round-trip duration in milliseconds. Supports standard DRF limit/offset pagination (default page size: 500, max: 500). Optionally filter by webhook_id and/or is_test. Only deliveries for webhooks owned by the authenticated user are returned.'
+      summary: List Webhook Delivery History
+      parameters:
+      - in: query
+        name: is_test
+        schema:
+          type: boolean
+        description: Filter by test (true) or production (false) deliveries
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of deliveries to return (default 500, max 500)
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of deliveries to skip for pagination
+      - in: query
+        name: webhook_id
+        schema:
+          type: integer
+        description: Filter deliveries to a specific webhook (optional)
+      tags:
+      - Webhooks
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - count
+                - results
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                  next:
+                    type:
+                    - string
+                    - 'null'
+                    format: uri
+                    example: http://api.example.org/accounts/?offset=400&limit=100
+                  previous:
+                    type:
+                    - string
+                    - 'null'
+                    format: uri
+                    example: http://api.example.org/accounts/?offset=200&limit=100
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        count:
+                          type: integer
+                        next:
+                          type:
+                          - string
+                          - 'null'
+                          format: uri
+                        previous:
+                          type:
+                          - string
+                          - 'null'
+                          format: uri
+                        results:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              timestamp:
+                                type: string
+                                format: date-time
+                              event_type:
+                                type: string
+                              company_id:
+                                type: integer
+                              response_status:
+                                type:
+                                - integer
+                                - 'null'
+                              response_body:
+                                type:
+                                - string
+                                - 'null'
+                              is_test:
+                                type: boolean
+                              duration_ms:
+                                type:
+                                - integer
+                                - 'null'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    WebhookCreateRequest:
+      type: object
+      description: 'Validates the payload for creating a new webhook.
+
+
+        Required fields: ``url``, ``event_type``, ``is_test``.
+
+        Optional fields: ``header_name``, ``prefix``, ``auth_secret``.'
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+      required:
+      - event_type
+      - is_test
+      - url
+    WebhookEventType:
+      type: object
+      description: Read-only representation of a supported webhook event type.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    WebhookFullRead:
+      type: object
+      description: 'Read-only serializer for webhook responses (list, retrieve, create, update).
+
+
+        ``masked_auth_secret`` is a pre-computed field stored on the model that
+
+        exposes only the last 4 characters of the auth secret (e.g. ``"****7890"``).
+
+        Secrets of 4 or fewer characters are fully masked as ``"****"``. This avoids
+
+        decrypting the auth secret on every read request.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        event_type:
+          type: string
+        active:
+          type: boolean
+        is_test:
+          type: boolean
+        url:
+          type: string
+          format: uri
+        header_name:
+          type: string
+        prefix:
+          type: string
+        masked_auth_secret:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - active
+      - created_at
+      - event_type
+      - header_name
+      - id
+      - is_test
+      - masked_auth_secret
+      - prefix
+      - url
+    EventTypeEnum:
+      enum:
+      - clientview_updated
+      - incremental_update
+      - series_updated
+      - document_added
+      type: string
+      description: '* `clientview_updated` - Clientview Updated
+
+        * `incremental_update` - Incremental Update
+
+        * `series_updated` - Series Updated
+
+        * `document_added` - Document Added'
+    PatchedWebhookUpdateRequest:
+      type: object
+      description: 'Validates the payload for updating an existing webhook (PATCH).
+
+
+        All fields are optional, but at least one must be provided.'
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        active:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+    PaginatedWebhookFullReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookFullRead'
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

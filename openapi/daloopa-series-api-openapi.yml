@@ -1,0 +1,223 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Series API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Series
+paths:
+  /api/v3/companies/series:
+    get:
+      operationId: company_series_list
+      description: Retrieve financial series data for a specific company with optional filtering
+      summary: Get Company Series Data
+      parameters:
+      - in: query
+        name: calendar_periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of calendar periods to restrict returned series values (e.g., 2023Q1, 2023Q2). Mutually exclusive with `fiscal_periods` and `periods`.
+        examples:
+          RecentQuarters:
+            value:
+            - 2023Q4
+            - 2024Q1
+            summary: Recent quarters
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: Unique identifier for the company
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+      - in: query
+        name: fiscal_periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of fiscal periods to restrict returned series values (e.g., 2023Q1, 2023Q2). Mutually exclusive with `calendar_periods` and `periods`.
+        examples:
+          RecentQuarters:
+            value:
+            - 2023Q4
+            - 2024Q1
+            summary: Recent quarters
+      - in: query
+        name: include_derived
+        schema:
+          type: boolean
+        description: Whether to include derived series. `true` = include derived series, `false` = exclude derived series, omit for default behavior (excludes derived).
+        examples:
+          IncludeDerived:
+            value: true
+            summary: Include Derived
+          ExcludeDerived:
+            value: false
+            summary: Exclude Derived
+      - in: query
+        name: keywords
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of keywords to filter series (max 15)
+        examples:
+          Revenue:
+            value:
+            - revenue
+            - sales
+            - income
+          Balance:
+            value:
+            - assets
+            - liabilities
+            - equity
+      - in: query
+        name: periods
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Deprecated: use `calendar_periods`. List of calendar periods (e.g., 2023Q1, 2023Q2).'
+        deprecated: true
+        examples:
+          RecentQuarters:
+            value:
+            - 2023Q4
+            - 2024Q1
+            summary: Recent quarters
+      tags:
+      - Series
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanySeriesResponse'
+              examples:
+                SuccessfulResponse:
+                  value:
+                  - - id: 12345
+                      full_series_name: Income Statement | Net sales | Net product sales
+                      row_number: 4
+                      hierarchy:
+                      - level: 1
+                        label: Income Statement
+                      - level: 2
+                        label: Net sales
+                      - level: 3
+                        label: Net product sales
+                    - id: 12346
+                      full_series_name: Income Statement | Gross Profit
+                      row_number: 10
+                      hierarchy:
+                      - level: 1
+                        label: Income Statement
+                      - level: 2
+                        label: Gross Profit
+                    - id: 12347
+                      full_series_name: Income Statement | Net Income
+                      row_number: 25
+                      hierarchy:
+                      - level: 1
+                        label: Income Statement
+                      - level: 2
+                        label: Net Income
+                  summary: Successful response
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    CompanySeriesResponse:
+      type: object
+      description: 'Serializer for the response of CompanySeriesService.get_company_series method.
+
+        Represents a single series item from the company''s Excel model.'
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the series/excel tag
+        full_series_name:
+          type: string
+          description: Full descriptive name of the financial series (e.g., 'Total Revenue', 'Net Income')
+        row_number:
+          type:
+          - string
+          - 'null'
+          description: Row position of the series in the source Excel model
+        hierarchy:
+          type: array
+          items:
+            $ref: '#/components/schemas/HierarchyLevel'
+          readOnly: true
+          description: Structured breakdown of the series name into hierarchical levels
+      required:
+      - full_series_name
+      - hierarchy
+      - id
+      - row_number
+    HierarchyLevel:
+      type: object
+      properties:
+        level:
+          type: integer
+          description: Depth level in the hierarchy (1-based)
+        label:
+          type: string
+          description: Label for this hierarchy level
+      required:
+      - label
+      - level
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

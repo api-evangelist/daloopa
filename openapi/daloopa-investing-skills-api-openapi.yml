@@ -1,0 +1,226 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Investing Skills API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Investing Skills
+paths:
+  /api/v3/investing-skills:
+    get:
+      operationId: list_investing_skills
+      description: Retrieve the catalog of available investing skills — reusable, model-initiated analytical workflows (earnings review, DCF, comps, etc.). Results can optionally be filtered by category.
+      summary: List Investing Skills
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - analysis
+          - deliverable
+          - valuation
+        description: Optional category to filter investing skills by. When omitted, skills across all categories are returned.
+        examples:
+          AnalysisSkills:
+            value: analysis
+            summary: Analysis skills
+            description: Return only skills in the analysis category.
+      tags:
+      - Investing Skills
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvestingSkillList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/investing-skills/{investing_skill_name}:
+    get:
+      operationId: retrieve_investing_skill
+      description: Retrieve a single investing skill by its unique name, including its full prompt content, declared inputs, and required tools.
+      summary: Retrieve Investing Skill
+      parameters:
+      - in: path
+        name: investing_skill_name
+        schema:
+          type: string
+        description: The unique name of the investing skill (e.g. 'earnings', 'dcf').
+        required: true
+        examples:
+          EarningsReview:
+            value: earnings
+            summary: Earnings Review
+            description: Example skill name for an earnings review workflow.
+      tags:
+      - Investing Skills
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestingSkillDetail'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    InvestingSkillList:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the investing skill
+        name:
+          type: string
+          description: Stable identifier used in URLs and tool args (e.g. 'earnings', 'dcf')
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          description: Human-readable label for the skill (e.g. 'Earnings Review')
+        description:
+          type: string
+          description: One/two-sentence summary of the skill, used for routing
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the skill was first created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the skill was last updated
+      required:
+      - created_at
+      - description
+      - id
+      - name
+      - title
+      - updated_at
+    InvestingSkillDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the investing skill
+        name:
+          type: string
+          description: Stable identifier used in URLs and tool args (e.g. 'earnings', 'dcf')
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          description: Human-readable label for the skill (e.g. 'Earnings Review')
+        description:
+          type: string
+          description: One/two-sentence summary of the skill, used for routing
+        content:
+          type: string
+          description: Full markdown prompt body, with placeholders like {ticker} / {tickers}
+        inputs:
+          description: 'Declared input params, e.g. [{"name": "ticker", "type": "string", "required": true}]'
+        required_tools:
+          description: Daloopa MCP tools the skill chains, e.g. ["discover_companies", "get_company_fundamentals"]
+      required:
+      - content
+      - description
+      - id
+      - inputs
+      - name
+      - required_tools
+      - title
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

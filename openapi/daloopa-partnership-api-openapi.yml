@@ -1,0 +1,140 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Partnership API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Partnership
+paths:
+  /api/v3/partnerships/user:
+    post:
+      operationId: create_partnership_user
+      description: Create a partnership pre-account for the given email under the authenticated API key's partnership program. A sign-up email is sent to the user with a link to complete account creation. The pre-account expires 30 days after creation. The monthly datapoint limit is determined by the chosen plan (BASE or PLUS).
+      summary: Create Partnership User
+      tags:
+      - Partnership
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnershipUserCreationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PartnershipUserCreationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PartnershipUserCreationRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    format: email
+                    description: Email of the created partnership user.
+                  plan:
+                    type: string
+                    enum:
+                    - BASE
+                    - PLUS
+                    description: Plan assigned to the partnership user.
+                  expires_at:
+                    type: string
+                    format: date-time
+                    description: ISO 8601 timestamp when the pre-account expires.
+                example:
+                  email: user@example.com
+                  plan: PLUS
+                  expires_at: '2026-06-06T12:00:00+00:00'
+                description: Partnership user successfully created.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    detail: A user with this email already exists
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters, or a user/pre-account with the given email already exists.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error: Partnership user limit of 10000 exceeded for this API key.
+                  status_code: 403
+                  message: Permission denied
+                description: Partnership user limit exceeded for this API key.
+          description: ''
+components:
+  schemas:
+    PartnershipUserCreationRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        plan:
+          $ref: '#/components/schemas/PlanEnum'
+      required:
+      - email
+      - plan
+    PlanEnum:
+      enum:
+      - BASE
+      - PLUS
+      type: string
+      description: '* `BASE` - BASE
+
+        * `PLUS` - PLUS'
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

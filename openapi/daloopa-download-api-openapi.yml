@@ -1,0 +1,201 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Download API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Download
+paths:
+  /api/v3/download-company-model:
+    get:
+      operationId: download_company_model
+      description: Generate a pre-signed URL to download the Excel model file for a specific company
+      summary: Get Company Model Download URL
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company (one of company_id / isin / ticker is required)
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email address to send the download link (optional if handled elsewhere)
+      - in: query
+        name: isin
+        schema:
+          type: string
+        description: ISIN for the target company (alternative identifier)
+      - in: query
+        name: model_type
+        schema:
+          type: string
+        description: Type of model to download (e.g., 'industry' or 'company')
+        required: true
+      - in: query
+        name: ticker
+        schema:
+          type: string
+        description: Ticker symbol for the target company (alternative identifier)
+      tags:
+      - Download
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadURL'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/download-industry-model:
+    get:
+      operationId: download_industry_model
+      description: Generate a pre-signed URL to download the Excel model file for a specific industry model
+      summary: Get Industry Model Download URL
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email address where the download link should be sent
+        required: true
+      - in: query
+        name: model_id
+        schema:
+          type: integer
+        description: The unique identifier of the industry model
+        required: true
+        examples:
+          TechnologyIndustryModel:
+            value: 456
+            summary: Technology Industry Model
+            description: Example industry model ID for technology sector
+      tags:
+      - Download
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadURL'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    DownloadURL:
+      type: object
+      properties:
+        download_url:
+          type: string
+          description: Pre-signed URL where the requested model can be downloaded
+      required:
+      - download_url
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

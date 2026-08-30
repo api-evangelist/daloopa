@@ -1,0 +1,179 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Export API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Export
+paths:
+  /api/v3/export/{ticker}:
+    get:
+      operationId: export_company_model_v3
+      description: Export file with company fundamentals metadata for a company as Parquet or CSV. Returns Parquet by default; pass `output_format=csv` to receive CSV. Supports both historical and real-time data export.
+      summary: Export Company Fundamentals
+      parameters:
+      - in: query
+        name: output_format
+        schema:
+          type: string
+          enum:
+          - csv
+          - parquet
+          default: parquet
+        description: 'Output file format, either ''csv'' or ''parquet'' (default: parquet)'
+        examples:
+          Parquet:
+            value: parquet
+            description: Return the export as a Parquet file
+          CSV:
+            value: csv
+            description: Return the export as a CSV file
+      - in: query
+        name: real_time
+        schema:
+          type: boolean
+          default: false
+        description: 'Fetch real-time data (default: false)'
+        examples:
+          Real-TimeData:
+            value: true
+            summary: Real-Time Data
+            description: Fetch real-time data for the export
+      - in: query
+        name: show_historical_data
+        schema:
+          type: boolean
+          default: false
+        description: 'Include historical data in export (default: false)'
+        examples:
+          IncludeHistorical:
+            value: true
+            summary: Include Historical
+            description: Include historical data in the export
+      - in: path
+        name: ticker
+        schema:
+          type: string
+        description: Company ticker symbol (e.g., AAPL, MSFT, AMZN)
+        required: true
+        examples:
+          Apple:
+            value: AAPL
+            description: Apple Inc. ticker symbol
+          Microsoft:
+            value: MSFT
+            description: Microsoft Corporation ticker symbol
+      tags:
+      - Export
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportModelSerializerV3'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: No exportable data available for TICKER
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    ExportModelSerializerV3:
+      type: object
+      description: 'V3 export query serializer.
+
+
+        Same shape as :class:`ExportModelSerializer` but ``output_format`` defaults to
+
+        ``parquet`` instead of ``csv`` — v3 returns Parquet by default and callers opt
+
+        into CSV with ``output_format=csv``.'
+      properties:
+        real_time:
+          type: boolean
+          default: false
+          description: If True, returns data that is incrementally updated and not yet available in the datasheet. If False, uses the last published snapshot.
+        show_historical_data:
+          type: boolean
+          default: false
+          description: Should be used with real_time=True. If True, returns data available in datasheet plus incrementally updated data. If False, returns just the incrementally updated data.
+        output_format:
+          allOf:
+          - $ref: '#/components/schemas/OutputFormatEnum'
+          default: parquet
+          description: 'Output file format. Either ''csv'' or ''parquet''. Defaults to ''parquet''.
+
+
+            * `csv` - csv
+
+            * `parquet` - parquet'
+    OutputFormatEnum:
+      enum:
+      - csv
+      - parquet
+      type: string
+      description: '* `csv` - csv
+
+        * `parquet` - parquet'
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

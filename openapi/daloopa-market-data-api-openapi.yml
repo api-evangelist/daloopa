@@ -1,0 +1,391 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Market Data API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Market Data
+paths:
+  /api/v3/companies/{company_id}/stock-prices:
+    get:
+      operationId: get_company_market_data
+      description: Retrieve paginated daily OHLCV (Open, High, Low, Close, Volume) stock price data for a specific company.
+      summary: Get Company Stock Prices
+      parameters:
+      - in: query
+        name: adjusted
+        schema:
+          type: boolean
+        description: 'Return adjusted prices when `true`; raw prices when `false`. Defaults to `false`. Adjusted prices restate history onto today''s per-share scale (the forward-adjustment convention): OHLC are multiplied by the cumulative factor of every stock split, cash dividend (including specials), and the price effect of spinoffs and distributions with an ex-date after the row''s date. Volume is adjusted only for share-count-changing splits and rounded to whole shares. Not provided: valuation of spun-off entities and reconstructed total-return series.'
+        examples:
+          AdjustedPrices:
+            value: true
+            summary: Adjusted Prices
+          RawPrices:
+            value: false
+            summary: Raw Prices
+      - in: path
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: dates
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+        description: Specific dates to retrieve data for, passed as repeated keys (`?dates=2024-01-02&dates=2024-01-03`), up to 100 per request. Mutually exclusive with `start_date`/`end_date`; one of `dates` or `start_date` is required.
+        explode: true
+        examples:
+          TwoSpecificDates:
+            value:
+            - '2024-01-02'
+            - '2024-01-03'
+            summary: Two specific dates
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: End date of the desired market data window (YYYY-MM-DD).
+        examples:
+          EndOf2024:
+            value: '2024-12-31'
+            summary: End of 2024
+            description: Retrieve data up to the end of 2024.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Start date of the desired market data window (YYYY-MM-DD). Required unless `dates` is provided.
+        examples:
+          StartOf2024:
+            value: '2024-01-01'
+            summary: Start of 2024
+            description: Retrieve data from the start of 2024.
+      tags:
+      - Market Data
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMarketDataList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/{company_id}/adjustment-factors:
+    get:
+      operationId: get_company_adjustment_factors
+      description: 'Retrieve paginated corporate-action adjustment factors for a specific company, ordered by ex-date. These are the same factors behind `adjusted=true` on the stock prices endpoint: to adjust a historical price, multiply it by every factor whose `ex_date` falls strictly after the price''s date (a factor no longer applies on its own ex-date). Volume is adjusted only by `split` factors. Rows with `factor_type` `other` are informational and are not applied to adjusted prices.'
+      summary: Get Company Stock Price Adjustment Factors
+      parameters:
+      - in: path
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: End ex-date of the desired factor window (YYYY-MM-DD, inclusive).
+        examples:
+          EndOf2024:
+            value: '2024-12-31'
+            summary: End of 2024
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Start ex-date of the desired factor window (YYYY-MM-DD, inclusive).
+        examples:
+          StartOf2024:
+            value: '2024-01-01'
+            summary: Start of 2024
+      tags:
+      - Market Data
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdjustmentFactorsList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    MarketData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Trading date for the returned datapoint
+        open:
+          type: number
+          format: double
+          description: Opening price on the trading date (currency units)
+        high:
+          type: number
+          format: double
+          description: Highest price reached during the trading date
+        low:
+          type: number
+          format: double
+          description: Lowest price reached during the trading date
+        close:
+          type: number
+          format: double
+          description: Closing price on the trading date (currency units)
+        volume:
+          type: integer
+          description: Total traded volume for the trading date
+        adjusted:
+          type: boolean
+          description: Echo of the request's adjusted flag
+      required:
+      - adjusted
+      - close
+      - date
+      - high
+      - low
+      - open
+      - volume
+    PaginatedAdjustmentFactorsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdjustmentFactors'
+    PaginatedMarketDataList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketData'
+    FactorTypeEnum:
+      enum:
+      - split
+      - cash_dividend
+      - spin_off
+      - other
+      type: string
+      description: '* `split` - Split
+
+        * `cash_dividend` - Cash Dividend
+
+        * `spin_off` - Spin Off
+
+        * `other` - Other'
+    AdjustmentFactors:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ex_date:
+          type: string
+          format: date
+          description: Date the adjustment takes effect; the factor applies to prices strictly before this date
+        factor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          description: Multiplier for historical prices before the ex date
+        factor_type:
+          allOf:
+          - $ref: '#/components/schemas/FactorTypeEnum'
+          description: 'One of split, cash_dividend, spin_off, or other
+
+
+            * `split` - Split
+
+            * `cash_dividend` - Cash Dividend
+
+            * `spin_off` - Spin Off
+
+            * `other` - Other'
+        event:
+          type: string
+          description: Corporate action event code (e.g. SD, DIV, DMRGR)
+          maxLength: 32
+        detail:
+          type: string
+          description: Human-readable description of the corporate action
+          maxLength: 1024
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - event
+      - ex_date
+      - factor
+      - factor_type
+      - id
+      - updated_at
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

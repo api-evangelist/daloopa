@@ -1,0 +1,1052 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Documents API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Documents
+paths:
+  /api/v3/documents:
+    get:
+      operationId: company_document_lookup_v3
+      description: Retrieve paginated list of documents for a specific company, optionally filtered by quarter and filing type. Use `calendar_quarters` or `fiscal_quarters` (repeatable, mutually exclusive) to filter on one or more quarters; `fiscal_quarters` are translated to the company's calendar quarters before filtering. Each document in the response carries both `calendar_quarter` and `fiscal_quarter`. Results are ordered by filing date descending.
+      summary: Company Document Lookup
+      parameters:
+      - in: query
+        name: calendar_quarters
+        schema:
+          type: array
+          items:
+            type: string
+        description: One or more calendar quarters in YYYYQ# format. Repeat the parameter to filter on several at once (e.g., ?calendar_quarters=2024Q1&calendar_quarters=2024Q2). Mutually exclusive with `fiscal_quarters`.
+        explode: true
+        style: form
+        examples:
+          Q12024:
+            value:
+            - 2024Q1
+            summary: Q1 2024
+          2024FirstHalf:
+            value:
+            - 2024Q1
+            - 2024Q2
+            summary: 2024 first half
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company.
+        required: true
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: filing_type
+        schema:
+          type: string
+          enum:
+          - 10-K
+          - 10-Q
+          - 8-K
+          - News Article
+          - Other
+          - Transcript
+        description: Type of filing to filter by.
+        examples:
+          QuarterlyReport:
+            value: 10-Q
+            summary: Quarterly Report
+          AnnualReport:
+            value: 10-K
+            summary: Annual Report
+          CurrentReport:
+            value: 8-K
+            summary: Current Report
+      - in: query
+        name: fiscal_quarters
+        schema:
+          type: array
+          items:
+            type: string
+        description: One or more fiscal quarters in YYYYQ# format. Translated to the company's calendar quarters before filtering. Mutually exclusive with `calendar_quarters`.
+        explode: true
+        style: form
+        examples:
+          FiscalQ12024:
+            value:
+            - 2024Q1
+            summary: Fiscal Q1 2024
+      - in: query
+        name: has_fundamentals
+        schema:
+          type: boolean
+        description: When true, restrict the result set to documents that have at least one related Fundamentals row. When omitted or false, behavior is unchanged.
+        examples:
+          OnlyDocumentsWithFundamentals:
+            value: true
+            summary: Only documents with fundamentals
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDocumentMetadataSerializerV3List'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  details:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  message:
+                    type: string
+          description: ''
+  /api/v3/documents/keyword-search:
+    post:
+      operationId: opensearch_lightweight_search_v3
+      description: 'Performs keyword search across multiple documents and returns matches without positional information for faster response times.
+
+
+        **Key Features:**
+
+        - Faster than batch search (no positional data retrieval)
+
+        - Each match includes a unique match_id
+
+        - Use match_id with the positional-info endpoint to get positions on demand
+
+        - Supports same filtering and search options as batch search
+
+
+        **Use Cases:**
+
+        - Initial search to find relevant documents quickly
+
+        - When positional information is not immediately needed
+
+        - Two-step workflow: search first, then get positions for specific matches
+
+
+        **Workflow:**
+
+        1. Use this endpoint to quickly find matching documents
+
+        2. Review results and identify matches of interest
+
+        3. Call the positional-info endpoint with match_id for precise locations'
+      summary: Keyword Search
+      tags:
+      - Documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSearchRequestSerializerV3Request'
+            examples:
+              QuickSearch:
+                value:
+                  keywords:
+                  - operating expenses
+                  options:
+                    size: 50
+                summary: Quick Search
+                description: Fast search across documents without positional data
+              Multi-companySearch:
+                value:
+                  keywords:
+                  - guidance
+                  - outlook
+                  filters:
+                    company_ids:
+                    - 2
+                    - 5
+                    - 10
+                    - 25
+                    filing_types:
+                    - Transcript
+                    - 8-K
+                summary: Multi-company Search
+                description: Search across multiple companies
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BatchSearchRequestSerializerV3Request'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BatchSearchRequestSerializerV3Request'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LightweightBatchSearchResponse'
+              examples:
+                QuickSearch:
+                  value:
+                    keywords:
+                    - operating expenses
+                    options:
+                      size: 50
+                  summary: Quick Search
+                  description: Fast search across documents without positional data
+                Multi-companySearch:
+                  value:
+                    keywords:
+                    - guidance
+                    - outlook
+                    filters:
+                      company_ids:
+                      - 2
+                      - 5
+                      - 10
+                      - 25
+                      filing_types:
+                      - Transcript
+                      - 8-K
+                  summary: Multi-company Search
+                  description: Search across multiple companies
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  details:
+                    type: object
+                example:
+                  success: false
+                  error: Invalid request parameters
+                  details:
+                    keywords:
+                    - Ensure this field has no more than 10 elements.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Authentication credentials were not provided.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: You do not have permission to perform this action.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 60 seconds.
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  message:
+                    type: string
+                example:
+                  success: false
+                  error: An error occurred during search
+                  message: Internal server error
+          description: ''
+  /api/v3/documents/{document_id}:
+    get:
+      operationId: retrieve_document
+      description: Retrieve a specific document by its ID. Returns a signed URL for document access with expiration timestamp.
+      summary: Retrieve Document
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: integer
+        description: The unique identifier of the document to retrieve.
+        required: true
+        examples:
+          DocumentID:
+            value: 12345
+            summary: Document ID
+            description: Example document ID
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentRetrievalResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/v3/documents/{document_id}/metadata:
+    get:
+      operationId: retrieve_document_metadata
+      description: 'Return structural metadata for a document: filing type, source document type, total character count, named sections with character counts, and a recommended_call hint that guides whether to fetch the whole document or a specific section next. The endpoint never returns the document body. Documents whose filing type is outside the allowlist return 200 with recommended_call set to not_supported and reason populated. Earnings call transcripts are excluded from whole-document access and return 403; use /documents/keyword-search to query transcript content.'
+      summary: Retrieve Document Metadata
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: integer
+        description: The unique identifier of the document.
+        required: true
+        examples:
+          DocumentID:
+            value: 12345
+            summary: Document ID
+            description: Example document ID
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentMetadataResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/v3/documents/{document_id}/content:
+    get:
+      operationId: retrieve_document_content
+      description: Return the processed flat text of a supported document (10-K, 10-Q, 8-K, News Article, Others). The response is a flat shape with no pagination and no section list; callers that need the section list or the recommended_call hint use the /metadata endpoint, and callers that need the original document file use GET /api/v2/documents/{id}. By default the response is capped at max_characters (100000) and truncated=true is set when the cap is hit. Pass full_content=true to bypass the cap. Filing types outside the allowlist return 400 with a reason; an unknown section name returns 400 with the available_sections list so the caller can recover. Earnings call transcripts are excluded from whole-document access and return 403; use /documents/keyword-search to query transcript content.
+      summary: Retrieve Document Content
+      parameters:
+      - in: path
+        name: document_id
+        schema:
+          type: integer
+        description: The unique identifier of the document.
+        required: true
+        examples:
+          DocumentID:
+            value: 12345
+            summary: Document ID
+            description: Example document ID
+      - in: query
+        name: full_content
+        schema:
+          type: boolean
+        description: When true, max_characters is ignored and the full text (or full section) is returned with truncated=false.
+      - in: query
+        name: max_characters
+        schema:
+          type: integer
+        description: Cap on returned characters. Defaults to 100000. Hard ceiling is 1000000; values above the ceiling are rejected. When the resolved text is longer than max_characters, the first max_characters are returned and truncated is set to true.
+      - in: query
+        name: section
+        schema:
+          type: string
+        description: Optional section name from the document's section index. When provided, only that section's text is returned. Use GET /api/v2/documents/{id}/metadata to discover valid section names.
+      tags:
+      - Documents
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentContentResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  reason:
+                    type: string
+                  available_sections:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+components:
+  schemas:
+    RecommendedCallEnum:
+      enum:
+      - small_full
+      - large_with_section
+      - single_section_filing
+      - not_supported
+      type: string
+      description: '* `small_full` - small_full
+
+        * `large_with_section` - large_with_section
+
+        * `single_section_filing` - single_section_filing
+
+        * `not_supported` - not_supported'
+    DocumentSection:
+      type: object
+      description: A single named section of a document with its character length.
+      properties:
+        name:
+          type: string
+          description: Display name of the section
+        characters:
+          type: integer
+          description: Number of characters in the section
+      required:
+      - characters
+      - name
+    OperatorEnum:
+      enum:
+      - AND
+      - OR
+      type: string
+      description: '* `AND` - AND
+
+        * `OR` - OR'
+    LightweightBatchSearchResponse:
+      type: object
+      description: Serializer for lightweight batch search responses without positional information.
+      properties:
+        success:
+          type: boolean
+          description: Whether the search was successful
+        total_hits:
+          type: integer
+          description: Total number of matching documents (accurate based on fuzzy setting)
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/LightweightDocumentMatch'
+          description: List of matching documents with match_ids for current page
+        offset:
+          type: integer
+          description: Current pagination offset
+        limit:
+          type: integer
+          description: Current page size limit
+        error:
+          type:
+          - string
+          - 'null'
+          description: Error message if search failed
+      required:
+      - documents
+      - limit
+      - offset
+      - success
+      - total_hits
+    DocumentMetadataSerializerV3:
+      type: object
+      description: 'V3 document metadata response serializer.
+
+
+        Same shape as :class:`DocumentMetadataSerializer` but without the deprecated
+
+        ``period`` output field. Kept as a standalone class so it is trivial to
+
+        delete once v2 is sunset.'
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        filing_date:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Date when the filing was reported
+        filing_type:
+          type:
+          - string
+          - 'null'
+          description: Type of Filing (e.g., '10-Q', '10-K')
+        document_type:
+          type:
+          - string
+          - 'null'
+          description: Document type classification
+        filing_uid:
+          type:
+          - string
+          - 'null'
+          description: SEC filing unique identifier
+        calendar_quarter:
+          type:
+          - string
+          - 'null'
+          description: Calendar quarter for the document in YYYYQ# format.
+        fiscal_quarter:
+          type:
+          - string
+          - 'null'
+          description: Fiscal quarter for the document in YYYYQ# format.
+      required:
+      - calendar_quarter
+      - document_id
+      - document_type
+      - filing_date
+      - filing_type
+      - filing_uid
+      - fiscal_quarter
+    DocumentContentResponse:
+      type: object
+      description: 'Flat response for GET /api/v2/documents/{id}/content.
+
+
+        The shape is intentionally narrow: just enough for the caller to use
+
+        the text. Section-level metadata (the available section list, the
+
+        recommended_call hint) is the responsibility of the /metadata
+
+        endpoint; the caller already knows which section it asked for.'
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        document_type:
+          type: string
+          description: Source document type classification carried alongside filing_type. Useful for disambiguating the broad Others filing bucket (for example Earnings Presentation, Investor Day Presentation, 6-K).
+        filing_type:
+          type: string
+          description: Type of filing (10-K, 10-Q, 8-K, News Article, Others). Transcripts are blocked on this endpoint and return 403; use /documents/keyword-search for transcript content.
+        content:
+          type: string
+          description: Document text. Capped at max_characters unless full_content=true. When section is provided, contains just that section's text.
+        number_of_characters:
+          type: integer
+          description: Number of characters in the returned content.
+        truncated:
+          type: boolean
+          description: True when the resolved text was longer than max_characters and the response was sliced. Always false when full_content=true.
+      required:
+      - content
+      - document_id
+      - document_type
+      - filing_type
+      - number_of_characters
+      - truncated
+    BatchSearchRequestSerializerV3Request:
+      type: object
+      description: 'V3 batch-search request.
+
+
+        Same shape as :class:`BatchSearchRequestSerializer` but nests the v3 filters
+
+        serializer, which drops the deprecated ``periods`` field.'
+      properties:
+        keywords:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: List of keywords to search for (1-10 keywords)
+          maxItems: 10
+          minItems: 1
+        filters:
+          allOf:
+          - $ref: '#/components/schemas/BatchSearchFiltersSerializerV3Request'
+          description: Optional filters for document selection
+        options:
+          allOf:
+          - $ref: '#/components/schemas/BatchSearchOptionsRequest'
+          description: Optional search options
+      required:
+      - keywords
+    DocumentMetadataResponse:
+      type: object
+      description: 'Serializer for the GET /api/v2/documents/{id}/metadata response.
+
+
+        Surfaces structural metadata only: document identity, filing type,
+
+        section breakdown with character counts, and a ``recommended_call``
+
+        hint that downstream callers (REST /content, get_document_content
+
+        MCP tool) consume to decide what to retrieve next.'
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        company_id:
+          type:
+          - integer
+          - 'null'
+          description: Id of the company the document belongs to. Resolved from the document's direct company with a fallback to its company identifier for older rows. Callers use it to attribute document access to a company (access control and subscription).
+        title:
+          type: string
+          description: Human-readable document title
+        filing_type:
+          type: string
+          description: Type of filing (10-K, 10-Q, 8-K, News Article, Others). Transcripts are blocked on this endpoint and return 403; use /documents/keyword-search for transcript content.
+        document_type:
+          type: string
+          description: Source document type classification carried alongside filing_type. Useful for disambiguating the broad Others filing bucket (for example Earnings Presentation, Investor Day Presentation, 6-K).
+        total_characters:
+          type: integer
+          description: Total number of characters in the document text. 0 when not_supported.
+        total_sections:
+          type: integer
+          description: Number of named sections in the document. 0 when not_supported.
+        available_sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSection'
+          description: Named sections with character counts. Empty when not_supported.
+        recommended_call:
+          allOf:
+          - $ref: '#/components/schemas/RecommendedCallEnum'
+          description: 'Hint for the next call. small_full and large_with_section apply to 10-K and 10-Q. single_section_filing applies to 8-K, News Article, and Others. not_supported applies to filing types outside the allowlist; Transcript filings reach this endpoint but are blocked with 403 before the service runs.
+
+
+            * `small_full` - small_full
+
+            * `large_with_section` - large_with_section
+
+            * `single_section_filing` - single_section_filing
+
+            * `not_supported` - not_supported'
+        reason:
+          type:
+          - string
+          - 'null'
+          description: Populated when recommended_call is not_supported.
+      required:
+      - available_sections
+      - company_id
+      - document_id
+      - document_type
+      - filing_type
+      - recommended_call
+      - title
+      - total_characters
+      - total_sections
+    BatchSearchFiltersSerializerV3Request:
+      type: object
+      description: 'V3 batch-search filters.
+
+
+        Same shape as :class:`BatchSearchFiltersSerializer` but without the deprecated
+
+        ``periods`` field (and thus no ``LegacyFieldAliasMixin``). Kept as a standalone
+
+        class so it is trivial to delete once v2 is sunset.'
+      properties:
+        company_ids:
+          type: array
+          items:
+            type: integer
+          description: List of company IDs to filter by
+        document_ids:
+          type: array
+          items:
+            type: integer
+          description: List of document IDs to filter by
+        filing_types:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: List of filing types to filter by (e.g., '10-K', '10-Q')
+        date_range:
+          type: object
+          additionalProperties: {}
+          description: Date range filter with 'start' and 'end' keys (YYYY-MM-DD format)
+        calendar_quarters:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: One or more calendar quarters in YYYYQ# format. Mutually exclusive with `fiscal_quarters`.
+        fiscal_quarters:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: One or more fiscal quarters in YYYYQ# format. Translated to each company's calendar quarters before filtering, so `company_ids` is required. Mutually exclusive with `calendar_quarters`.
+    LightweightMatch:
+      type: object
+      description: Serializer for individual lightweight matches.
+      properties:
+        keyword:
+          type: string
+          description: The matched keyword
+        context:
+          type: string
+          description: Context snippet around the match
+        match_id:
+          type: string
+          description: Compact match ID for fetching positional info
+      required:
+      - context
+      - keyword
+      - match_id
+    PaginatedDocumentMetadataSerializerV3List:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentMetadataSerializerV3'
+    BatchSearchOptionsRequest:
+      type: object
+      description: Serializer for batch search options.
+      properties:
+        size:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          description: Maximum number of documents to return per page (1-100)
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: 'Number of documents to skip for pagination (default: 0)'
+        operator:
+          allOf:
+          - $ref: '#/components/schemas/OperatorEnum'
+          default: OR
+          description: 'Search operator - ''AND'' requires all keywords, ''OR'' requires any keyword
+
+
+            * `AND` - AND
+
+            * `OR` - OR'
+        fuzzy:
+          type: boolean
+          default: false
+          description: 'Enable fuzzy matching (default: False). When False, only exact phrase matches are returned. When True, allows approximate matches but positional information may be unavailable.'
+    LightweightDocumentMatch:
+      type: object
+      description: Serializer for lightweight document matches without positional information.
+      properties:
+        document_id:
+          type: integer
+          description: Document ID
+        company_id:
+          type:
+          - integer
+          - 'null'
+          description: Company ID
+        filing_type:
+          type:
+          - string
+          - 'null'
+          description: Filing type
+        affinitized_date:
+          type:
+          - string
+          - 'null'
+          description: Affinitized date
+        calendar_quarter:
+          type:
+          - string
+          - 'null'
+          description: Calendar quarter for the document (YYYYQ#)
+        fiscal_quarter:
+          type:
+          - string
+          - 'null'
+          description: Fiscal quarter for the document (YYYYQ#)
+        document_title:
+          type:
+          - string
+          - 'null'
+          description: Document title
+        score:
+          type: number
+          format: double
+          description: Relevance score
+        source_url:
+          type: string
+          description: Link to the document in the viewer. This endpoint does not resolve a page, so the link opens the document at the top.
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/LightweightMatch'
+          description: List of matches in this document, each with its own match_id
+      required:
+      - document_id
+      - matches
+      - score
+    DocumentRetrievalResponse:
+      type: object
+      description: Serializer for document retrieval responses including signed URL.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        signed_url:
+          type: string
+          format: uri
+          description: Signed URL for document access
+        url_expires_at:
+          type: string
+          format: date-time
+          description: URL expiration timestamp
+        file_type:
+          type: string
+          description: Type of the document file
+      required:
+      - document_id
+      - file_type
+      - signed_url
+      - url_expires_at
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

@@ -1,0 +1,710 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Taxonomy API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Taxonomy
+paths:
+  /api/v3/taxonomy/metrics:
+    get:
+      operationId: list_taxonomy_metrics_v3
+      description: Retrieve a list of all available Taxonomy Metrics. Optionally filter by a specific company and series.
+      summary: List Taxonomy Metrics
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: query
+        name: keywords
+        schema:
+          type: array
+          items:
+            type: string
+        description: A list of keywords to filter the KPIs. Maximum of 15 keywords allowed.
+        examples:
+          RevenueAndProfit:
+            value:
+            - revenue
+            - profit
+            summary: Revenue and Profit
+            description: Example keywords to filter KPIs
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: series_id
+        schema:
+          type: integer
+        description: The unique identifier of the series
+        examples:
+          IncomeStatement|TotalRevenue:
+            value: 1319
+            summary: Income Statement | Total Revenue
+            description: Example series ID
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxonomyMetricList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/metrics/{id}:
+    get:
+      operationId: retrieve_taxonomy_metric_v3
+      description: Retrieve detailed information about a specific Taxonomy Metric by its unique identifier.
+      summary: Retrieve Taxonomy Metric
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: The unique identifier of the company
+        examples:
+          AppleInc.:
+            value: 2
+            summary: Apple Inc.
+            description: Example company ID for Apple Inc.
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: The unique identifier of the Taxonomy Metric
+        required: true
+        examples:
+          ExampleMetricID:
+            value: 1
+            summary: Example Metric ID
+            description: An example Metric ID to retrieve details for
+      - in: query
+        name: industry_id
+        schema:
+          type: integer
+        description: The unique identifier of the industry
+      - in: query
+        name: sector_id
+        schema:
+          type: integer
+        description: The unique identifier of the sector
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxonomyMetricData'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/industry-template/{industry_id}:
+    get:
+      operationId: retrieve_taxonomy_industry_template_v3
+      description: Retrieve an industry template for a given IndustryClassification, including associated sectors and active template metrics with associated company series.
+      summary: Retrieve Taxonomy Industry Template
+      parameters:
+      - in: path
+        name: industry_id
+        schema:
+          type: integer
+        description: The unique identifier of the IndustryClassification
+        required: true
+        examples:
+          ExampleIndustryID:
+            value: 1
+            summary: Example Industry ID
+            description: An example IndustryClassification ID to retrieve a template for
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxonomyIndustryTemplate'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/industries:
+    get:
+      operationId: list_taxonomy_industries
+      description: Retrieve Ops industries (IndustryClassification) and their member companies. Optionally filter by company_id (returns that company's industry and peers) or sector_id.
+      summary: List Taxonomy Industries
+      parameters:
+      - in: query
+        name: company_id
+        schema:
+          type: integer
+        description: Return the industry for this company along with peer companies
+        examples:
+          ExampleCompanyID:
+            value: 123
+            summary: Example Company ID
+            description: An example Company ID to focus industry matches
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: sector_id
+        schema:
+          type: integer
+        description: Filter industries belonging to the specified GICS sector
+        examples:
+          ExampleSectorID:
+            value: 1
+            summary: Example Sector ID
+            description: An example Ops sector ID
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxonomyIndustryList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/taxonomy/sectors:
+    get:
+      operationId: list_taxonomy_sectors
+      description: Retrieve Ops sectors and their associated Ops industries (IndustryClassification).
+      summary: List Taxonomy Sectors
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - Taxonomy
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxonomySectorList'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    TaxonomyMetricSeriesItem:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the series belongs to
+        ticker:
+          type: string
+          description: Ticker symbol of the company the series belongs to
+        series_id:
+          type: integer
+          description: Identifier of the series associated with the metric
+        full_series_name:
+          type: string
+          description: Full descriptive name of the series
+        is_fallback_series:
+          type: boolean
+          default: false
+          description: Indicates whether the series is a fallback series for the metric
+      required:
+      - company_id
+      - full_series_name
+      - series_id
+      - ticker
+    TaxonomySector:
+      type: object
+      properties:
+        sector_id:
+          type: integer
+          description: Unique identifier for the sector
+        sector_name:
+          type: string
+          default: ''
+          description: Display name of the sector using Global Industry Classification Standard (GICS)
+        industries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomySectorIndustry'
+          description: Ops industries that belong to the sector
+      required:
+      - industries
+      - sector_id
+    TaxonomyIndustryTemplate:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for this template
+        name:
+          type: string
+          description: Display name of the Ops industry on the classification
+        sectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryTemplateSector'
+          description: Ops sectors associated with the industry classification
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryTemplateMetric'
+          description: Active template metric slots for the industry classification
+      required:
+      - industry_id
+      - metrics
+      - name
+      - sectors
+    PaginatedTaxonomyMetricList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyMetric'
+    TaxonomyIndustryTemplateSeries:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the series belongs to
+        company_ticker:
+          type: string
+          description: Ticker symbol of the company the series belongs to
+        api_series_id:
+          type: integer
+          description: Identifier of the series associated with the metric
+        full_series_name:
+          type: string
+          description: Full descriptive name of the series
+      required:
+      - api_series_id
+      - company_id
+      - company_ticker
+      - full_series_name
+    TaxonomyIndustryTemplateSector:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the sector
+        name:
+          type: string
+          description: Display name of the sector using Global Industry Classification Standard (GICS)
+      required:
+      - id
+      - name
+    TaxonomyIndustryTemplateMetric:
+      type: object
+      properties:
+        taxonomy_metric_id:
+          type:
+          - integer
+          - 'null'
+          description: Unique identifier of the linked TaxonomyKPI, if any
+        taxonomy_metric_name:
+          type:
+          - string
+          - 'null'
+          description: Display name of the linked TaxonomyKPI, if any
+        category:
+          type: string
+          description: Template metric category label (e.g. KPI, Segments)
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryTemplateSeries'
+          description: Company series for this metric within the industry classification
+      required:
+      - category
+      - series
+      - taxonomy_metric_id
+      - taxonomy_metric_name
+    TaxonomyIndustryCompany:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the company within the taxonomy result
+        ticker:
+          type: string
+          description: Ticker symbol for the company within the taxonomy result
+        name:
+          type: string
+          description: Company name displayed in the taxonomy result
+      required:
+      - id
+      - name
+      - ticker
+    TaxonomySectorIndustry:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for the industry
+        name:
+          type: string
+          description: Display name of the industry using Global Industry Classification Standard (GICS)
+      required:
+      - industry_id
+      - name
+    TaxonomyMetricData:
+      type: object
+      properties:
+        metric_id:
+          type: integer
+          description: Unique identifier for the taxonomy metric
+        metric_name:
+          type: string
+          default: ''
+          description: Human-readable name of the metric
+        metric_description:
+          type: string
+          default: ''
+          description: Description of what the metric represents
+        global_metric:
+          type: boolean
+          default: false
+          description: Indicates whether the metric is a global metric, meaning all companies should have this metric
+        fallback_metric:
+          type:
+          - integer
+          - 'null'
+          description: Alternative metric to query if this metric is unavailable for a company
+        financial_statement_sections:
+          type: array
+          items:
+            type: string
+          description: Financial statement sections where this metric may appear (e.g. Income Statement, Balance Sheet)
+        metric_series:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyMetricSeriesItem'
+          description: Series where the metric appears, grouped by company
+      required:
+      - metric_id
+      - metric_series
+    PaginatedTaxonomyIndustryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustry'
+    TaxonomyMetric:
+      type: object
+      properties:
+        metric_id:
+          type: integer
+          description: Unique identifier for the taxonomy metric
+        metric_name:
+          type: string
+          default: ''
+          description: Human-readable name of the metric
+        metric_description:
+          type: string
+          default: ''
+          description: Description of what the metric represents
+        global_metric:
+          type: boolean
+          default: false
+          description: Indicates whether the metric is a global metric, meaning all companies should have this metric
+        fallback_metric:
+          type:
+          - integer
+          - 'null'
+          description: Alternative metric to query if this metric is unavailable for a company
+        financial_statement_sections:
+          type: array
+          items:
+            type: string
+          description: Financial statement sections where this metric may appear (e.g. Income Statement, Balance Sheet)
+      required:
+      - metric_id
+    TaxonomyIndustry:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for the industry
+        name:
+          type: string
+          default: ''
+          description: Display name of the industry using Global Industry Classification Standard (GICS)
+        sector_id:
+          type: integer
+          description: Identifier of the parent sector
+        sector_name:
+          type: string
+          default: ''
+          description: Display name of the parent sector using Global Industry Classification Standard (GICS)
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryCompany'
+          description: Companies that belong to the industry
+      required:
+      - companies
+      - industry_id
+      - sector_id
+    PaginatedTaxonomySectorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomySector'
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

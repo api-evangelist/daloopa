@@ -1,0 +1,427 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Companies API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Companies
+  description: Company Data and Metadata
+paths:
+  /api/v3/companies:
+    get:
+      operationId: companies_list_v3
+      description: Retrieve paginated list of companies covered by Daloopa with an optional keyword filtering
+      summary: List Companies
+      parameters:
+      - in: query
+        name: keyword
+        schema:
+          type: string
+        description: Filter companies by name or ticker symbol (case-insensitive)
+        examples:
+          SearchByCompanyName:
+            value: Apple
+            summary: Search by company name
+          SearchByTicker:
+            value: AAPL
+            summary: Search by ticker
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results to return per page.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The initial index from which to return results.
+      tags:
+      - Companies
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCompanyList'
+              examples:
+                SuccessfulResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 2
+                        name: Apple Inc.
+                        ticker: AAPL
+                        industry_: Technology Hardware, Storage & Peripherals
+                        sector_: Information Technology
+                        actively_maintained: true
+                        model_updated_at: '2024-01-15T10:30:00Z'
+                        earliest_calendar_quarter: 2020Q1
+                        latest_calendar_quarter: 2024Q1
+                        earliest_fiscal_quarter: 2020Q1
+                        latest_fiscal_quarter: 2024Q1
+                        companyidentifier_set:
+                        - identifier_type: ISIN
+                          identifier_value: US0378331005
+                        - identifier_type: CUSIP
+                          identifier_value: 037833100
+                  summary: Successful response
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/v3/companies/status:
+    post:
+      operationId: check_company_status
+      description: 'Check the data freshness signals for specified companies. Each company entry in the response distinguishes three timestamps:
+
+
+        - `latest_datapoint_created_at`: when the latest publish notification for the company was created. Falls back to the company''s live Excel model `created_at` when no active non-clientview notification exists.
+
+        - `latest_datapoint_updated_at`: the latest data change for the company, computed as the max of the most recent DELETE event in FundamentalEventLog and the most recent incremental-update error in FundamentalErrors.
+
+        - `model_updated_at`: when the company''s Excel model was last touched.'
+      summary: Check Company Model Status
+      tags:
+      - Companies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusQueryRequest'
+            examples:
+              CheckMultipleCompanies:
+                value:
+                  companies:
+                  - 1234
+                  - 5678
+                  - 9012
+                summary: Check Multiple Companies
+                description: Check status for multiple companies
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyStatus'
+              examples:
+                CheckMultipleCompanies:
+                  value:
+                  - companies:
+                    - 1234
+                    - 5678
+                    - 9012
+                  summary: Check Multiple Companies
+                  description: Check status for multiple companies
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    IdentifierTypeEnum:
+      enum:
+      - CIK
+      - ISIN
+      - CUSIP
+      - SEDOL
+      - FIGI
+      - PRIVATE
+      - CompanyHouseId
+      - CapIQCompanyId
+      - CapIQCompanyTicker
+      - ASXCode
+      type: string
+      description: '* `CIK` - Identifier used by SEC
+
+        * `ISIN` - International Securities Identification Number
+
+        * `CUSIP` - US and Canada
+
+        * `SEDOL` - UK and Ireland
+
+        * `FIGI` - Bloomberg
+
+        * `PRIVATE` - private company data with public identifiers
+
+        * `CompanyHouseId` - company house identifier
+
+        * `CapIQCompanyId` - CapIQ Company identifier
+
+        * `CapIQCompanyTicker` - CapIQ Company Ticker
+
+        * `ASXCode` - Australian Securities Exchange Company Identifier'
+    CompanyStatus:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Unique identifier for the company
+        latest_datapoint_created_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Timestamp when the latest publish notification for the company was created. Falls back to the company's live Excel model `created_at` when no active non-clientview notification exists.
+        latest_datapoint_updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: 'Timestamp of the latest data change for the company: max of the most recent DELETE event in FundamentalEventLog and the most recent incremental-update error in FundamentalErrors. Null if neither exists.'
+        latest_period:
+          type:
+          - string
+          - 'null'
+          description: Most recent period for which data exists.
+        model_updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Timestamp when the company's Excel model was last touched.
+      required:
+      - company_id
+      - latest_datapoint_created_at
+      - latest_datapoint_updated_at
+      - latest_period
+      - model_updated_at
+    PaginatedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+    Company:
+      type: object
+      description: Company serializer with industry, sector and companyidentifier_set as additional fields.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: Unique identifier for the company
+        name:
+          type:
+          - string
+          - 'null'
+          description: Registered name of the company
+          maxLength: 255
+        ticker:
+          type:
+          - string
+          - 'null'
+          description: Primary ticker symbol used to identify the company
+          maxLength: 255
+        industry_:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+          title: 'Industry '
+          description: Name of the industry the company belongs to
+        sector_:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+          title: 'Sector '
+          description: Name of the sector the company belongs to
+        actively_maintained:
+          type: boolean
+        companyidentifier_set:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyIdentifier'
+          readOnly: true
+          description: Alternate identifiers associated with the company (e.g., ISIN, CIK)
+        model_updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the company's model was last updated
+        earliest_calendar_quarter:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+          description: Earliest calendar quarter available in the company's model
+        latest_calendar_quarter:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+          description: Most recent calendar quarter available in the company's model
+        earliest_fiscal_quarter:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+          description: Earliest fiscal quarter available in the company's model
+        latest_fiscal_quarter:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+          description: Most recent fiscal quarter available in the company's model
+      required:
+      - companyidentifier_set
+      - earliest_calendar_quarter
+      - earliest_fiscal_quarter
+      - id
+      - industry_
+      - latest_calendar_quarter
+      - latest_fiscal_quarter
+      - model_updated_at
+      - sector_
+    CompanyStatusQueryRequest:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: integer
+          description: List of company ids to check status for
+          maxItems: 500
+      required:
+      - companies
+    CompanyIdentifier:
+      type: object
+      properties:
+        identifier_type:
+          allOf:
+          - $ref: '#/components/schemas/IdentifierTypeEnum'
+          description: 'Type of identifier (e.g., ISIN, CIK, ticker)
+
+
+            * `CIK` - Identifier used by SEC
+
+            * `ISIN` - International Securities Identification Number
+
+            * `CUSIP` - US and Canada
+
+            * `SEDOL` - UK and Ireland
+
+            * `FIGI` - Bloomberg
+
+            * `PRIVATE` - private company data with public identifiers
+
+            * `CompanyHouseId` - company house identifier
+
+            * `CapIQCompanyId` - CapIQ Company identifier
+
+            * `CapIQCompanyTicker` - CapIQ Company Ticker
+
+            * `ASXCode` - Australian Securities Exchange Company Identifier'
+        identifier_value:
+          type:
+          - string
+          - 'null'
+          description: Identifier value corresponding to the identifier type
+          maxLength: 255
+      required:
+      - identifier_type
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

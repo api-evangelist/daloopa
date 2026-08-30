@@ -1,0 +1,209 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Data Warehouse API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Data Warehouse
+paths:
+  /api/v3/companies/bulk-subscribe:
+    post:
+      operationId: bulk_add_data_warehouse_company_subscription
+      description: Add subscriptions to multiple companies for the authenticated user. This operation respects the user's subscription limit and syncs the local database. If the user has Snowflake and/or Databricks permissions, subscriptions are also synced to the corresponding data warehouses. If the number of requested companies exceeds the user's remaining subscription slots, only the first N companies that fit within the limit will be processed; the rest will be returned in 'skipped_limit_exceeded'.
+      summary: Bulk Add Data Warehouse Company Subscriptions
+      tags:
+      - Data Warehouse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCompanySubscriptionQueryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkCompanySubscriptionQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkCompanySubscriptionQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inserted:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs successfully subscribed across all warehouses.
+                  already_existed:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs that already had an entitlement in a data warehouse.
+                  not_found:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs that do not exist in the data warehouse.
+                  skipped_already_subscribed:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs already subscribed locally before calling the data warehouse.
+                  skipped_limit_exceeded:
+                    type: array
+                    items:
+                      type: integer
+                    description: Company IDs excluded because the subscription limit would be exceeded.
+                  warehouses:
+                    type: object
+                    description: Per-warehouse breakdown of results.
+                    additionalProperties:
+                      type: object
+                      properties:
+                        inserted:
+                          type: array
+                          items:
+                            type: integer
+                        already_existed:
+                          type: array
+                          items:
+                            type: integer
+                        not_found:
+                          type: array
+                          items:
+                            type: integer
+                        error:
+                          type:
+                          - string
+                          - 'null'
+                example:
+                  inserted:
+                  - 101
+                  - 102
+                  already_existed:
+                  - 103
+                  not_found:
+                  - 999
+                  skipped_already_subscribed:
+                  - 104
+                  skipped_limit_exceeded:
+                  - 105
+                  - 106
+                  warehouses:
+                    snowflake:
+                      inserted:
+                      - 101
+                      - 102
+                      already_existed:
+                      - 103
+                      not_found:
+                      - 999
+                      error: null
+                    databricks:
+                      inserted:
+                      - 101
+                      already_existed:
+                      - 102
+                      - 103
+                      not_found:
+                      - 999
+                      error: null
+                description: Bulk subscription result with details per company ID and per-warehouse breakdown.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    company_ids:
+                    - This field is required.
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters or missing fields.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: API limit of 50 companies exceeded for user@example.com. Cannot subscribe to more companies.
+                description: Company subscription limit exceeded.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 1 minute.
+                description: Rate limit exceeded (max 120 requests per minute).
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Bulk subscription failed due to internal error.
+                description: Unexpected internal server error during data warehouse operation.
+          description: ''
+components:
+  schemas:
+    BulkCompanySubscriptionQueryRequest:
+      type: object
+      properties:
+        company_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - company_ids
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

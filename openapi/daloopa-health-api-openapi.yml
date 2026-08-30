@@ -1,0 +1,21 @@
+openapi: 3.2.0
+info:
+  title: Daloopa MCP Service Health API
+  description: A service that provides Daloopa's financial data
+  version: 1.0.0
+tags:
+- name: Health
+paths:
+  /health/:
+    get:
+      summary: Health Check
+      description: Health check endpoint.
+      operationId: health_check_health__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      tags:
+      - Health

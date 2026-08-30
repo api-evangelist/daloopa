@@ -1,0 +1,94 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Industry Models API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Industry Models
+paths:
+  /api/v3/industry-company-models:
+    get:
+      operationId: get_company_industry_models
+      description: Retrieve the mapping between companies and their associated industry models, including ISIN identifiers and model metadata.
+      summary: Get Company Industry Model Mappings
+      tags:
+      - Industry Models
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyIndustryModel'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+components:
+  schemas:
+    IndustryModel:
+      type: object
+      properties:
+        model_id:
+          type: integer
+          description: Identifier for the published industry model
+        description:
+          type: string
+          description: Short description of the industry model contents
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the industry model was last updated
+      required:
+      - description
+      - model_id
+      - updated_at
+    CompanyIndustryModel:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier for the company associated with the industry models
+        isin:
+          type: string
+          description: ISIN assigned to the company associated with the industry models
+        industry_models:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndustryModel'
+          description: Collection of industry models available for the company
+      required:
+      - company_id
+      - industry_models
+      - isin
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'

@@ -1,0 +1,131 @@
+openapi: 3.2.0
+info:
+  title: Daloopa Databricks API
+  version: 2.0.0
+  description: Comprehensive API for financial data and analytics
+  contact:
+    name: Daloopa API Support
+    email: api-support@daloopa.com
+  license:
+    name: Proprietary
+servers:
+- url: https://app.daloopa.com
+  description: Production
+tags:
+- name: Databricks
+paths:
+  /api/v3/databricks/company-subscription:
+    post:
+      operationId: add_databricks_company_subscription
+      description: Add a subscription to a company for the authenticated user. This operation updates both Databricks and the local database.
+      summary: Add Databricks Company Subscription
+      tags:
+      - Databricks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanySubscriptionQueryRequest'
+        required: true
+      security:
+      - apiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Subscription successfully added or already exists.
+                description: Subscription successfully added or already existed.
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                  status_code:
+                    type: integer
+                  message:
+                    type: string
+                example:
+                  error:
+                    company_id:
+                    - This field is required.
+                  status_code: 400
+                  message: Invalid parameters
+                description: Invalid input parameters or missing fields.
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: API limit of 50 companies exceeded for user@example.com. Cannot subscribe to company 1234.
+                description: Company limit exceeded.
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Invalid or missing API key.
+                description: Authentication credentials were not provided or are invalid.
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                example:
+                  detail: Request was throttled. Expected available in 1 minute.
+                description: Rate limit exceeded (max 120 requests per minute).
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Databricks subscription failed due to internal error.
+                description: Unexpected internal server error during Databricks operation.
+          description: ''
+components:
+  schemas:
+    CompanySubscriptionQueryRequest:
+      type: object
+      properties:
+        company_id:
+          type: integer
+      required:
+      - company_id
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: basic
+      description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'
