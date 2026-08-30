@@ -30,18 +30,18 @@ created: '2026-08-11'
 modified: '2026-08-11'
 tags:
 - Financial Data
-- Fundamental Data
+- fundamental-data
 - Market Data
-- Investment Research
-- Equity Research
-- SEC Filings
-- Earnings
+- investment-research
+- equity-research
+- sec-filings
+- earnings
 - Fintech
 - MCP
 - agent-native
-- Agent Skills
+- agent-skills
 - Webhook
-- Data Warehouse
+- data-warehouse
 tags_raw:
 - financial-data
 - fundamental-data
@@ -68,6 +68,8 @@ apis:
   humanURL: https://docs.daloopa.com/docs/overview
   baseURL: https://app.daloopa.com/api/v3
   tags:
+  - Authentication
+  tags_raw:
   - Auth
   properties:
   - type: OpenAPI
@@ -376,6 +378,8 @@ apis:
   humanURL: https://docs.daloopa.com/docs/overview
   baseURL: https://app.daloopa.com/api/v3
   tags:
+  - Downloads
+  tags_raw:
   - Download
   properties:
   - type: OpenAPI
@@ -860,6 +864,8 @@ apis:
   humanURL: https://docs.daloopa.com/docs/overview
   baseURL: https://app.daloopa.com/api/v3
   tags:
+  - Webhook
+  tags_raw:
   - Webhooks
   properties:
   - type: OpenAPI
