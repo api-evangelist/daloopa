@@ -1,14 +1,13 @@
 aid: daloopa
 name: Daloopa
-description: >-
-  Daloopa is an AI-powered fundamental financial data platform for institutional investors, providing
-  analyst-verified, source-linked financial data extracted from SEC filings, earnings transcripts,
+description: Daloopa is an AI-powered fundamental financial data platform for institutional investors,
+  providing analyst-verified, source-linked financial data extracted from SEC filings, earnings transcripts,
   investor presentations and press releases. Coverage spans 6,000+ global public companies with roughly
-  14 years of history, and every datapoint is hyperlinked back to the exact location in the original
-  source document for auditability. The company sells to hedge funds, mutual funds, investment banks,
-  equity research and private equity teams, and delivers the same dataset across a REST API, a hosted
-  remote MCP server, an Excel add-in, prebuilt Data Sheets, the Scout AI modeling agent, and native
-  cloud-warehouse shares via Snowflake, Databricks and AWS S3.
+  14 years of history, and every datapoint is hyperlinked back to the exact location in the original source
+  document for auditability. The company sells to hedge funds, mutual funds, investment banks, equity
+  research and private equity teams, and delivers the same dataset across a REST API, a hosted remote
+  MCP server, an Excel add-in, prebuilt Data Sheets, the Scout AI modeling agent, and native cloud-warehouse
+  shares via Snowflake, Databricks and AWS S3.
 url: https://raw.githubusercontent.com/api-evangelist/daloopa/refs/heads/main/apis.yml
 deliveryModel:
   model: saas
@@ -43,7 +42,7 @@ x-type: company
 x-source: harvest:secondary-market
 specificationVersion: '0.23'
 created: '2026-08-11'
-modified: '2026-08-11'
+modified: '2026-09-16'
 tags:
 - Financial Data
 - Fundamental Data
@@ -213,7 +212,7 @@ apis:
   - type: APIReference
     url: https://mcp.daloopa.com/redoc
 - aid: daloopa:daloopa-daloopa-mcp-service-api
-  name: Daloopa Daloopa MCP Service API
+  name: Daloopa MCP Service API
   description: The Daloopa MCP Service API from Daloopa — 1 operation(s) for daloopa mcp service.
   humanURL: https://docs.daloopa.com/docs/overview
   baseURL: https://app.daloopa.com/api/v3
@@ -984,4 +983,3 @@ x-enrichment:
   status: enriched
   artifacts_added: 50
   pass: local-v1
-
