@@ -2,7 +2,7 @@ openapi: 3.2.0
 info:
   title: Daloopa Consumption API
   version: '1.0'
-  description: 'Operations tagged Consumption across 2 of this provider''s published API definitions: daloopa-api-openapi.yml, daloopa-mcp-service-openapi.json. Each path carries the servers of the definition it was published in.'
+  description: 'Operations tagged Consumption across 2 of this provider''s published API definitions: daloopa-api-openapi.yml, daloopa-mcp-service-openapi-original.json. Each path carries the servers of the definition it was published in.'
 servers:
 - url: https://app.daloopa.com
   description: Production
@@ -488,28 +488,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    Consumption:
-      type: object
-      properties:
-        monthly_limit:
-          type: string
-          description: Monthly datapoint consumption limit for the account
-        consumption:
-          type: integer
-          description: Number of datapoints consumed within the requested window
-        initial_date:
-          type: string
-          format: date
-          description: Start date used to calculate consumption
-        final_date:
-          type: string
-          format: date
-          description: End date used to calculate consumption
-      required:
-      - consumption
-      - final_date
-      - initial_date
-      - monthly_limit
     PaginatedConsumptionEventList:
       type: object
       required:
@@ -535,6 +513,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConsumptionEvent'
+    PaginatedAccessedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedCompany'
     ConsumptionEvent:
       type: object
       properties:
@@ -562,6 +565,64 @@ components:
       - source
       - timestamp
       - user_identifier
+    SeriesConsumption:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          readOnly: true
+        current_series_per_company_limit:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        number_of_series_accessed_for_company:
+          type: integer
+          readOnly: true
+        series_accessed:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedSeries'
+          readOnly: true
+      required:
+      - company_id
+      - current_series_per_company_limit
+      - number_of_series_accessed_for_company
+      - series_accessed
+    AccessedSeries:
+      type: object
+      properties:
+        series_id:
+          type: integer
+          readOnly: true
+        full_series_name:
+          type: string
+          readOnly: true
+      required:
+      - full_series_name
+      - series_id
+    Consumption:
+      type: object
+      properties:
+        monthly_limit:
+          type: string
+          description: Monthly datapoint consumption limit for the account
+        consumption:
+          type: integer
+          description: Number of datapoints consumed within the requested window
+        initial_date:
+          type: string
+          format: date
+          description: Start date used to calculate consumption
+        final_date:
+          type: string
+          format: date
+          description: End date used to calculate consumption
+      required:
+      - consumption
+      - final_date
+      - initial_date
+      - monthly_limit
     AccessedCompany:
       type: object
       properties:
@@ -587,67 +648,6 @@ components:
       - company_name
       - first_accessed_at
       - ticker
-    AccessedSeries:
-      type: object
-      properties:
-        series_id:
-          type: integer
-          readOnly: true
-        full_series_name:
-          type: string
-          readOnly: true
-      required:
-      - full_series_name
-      - series_id
-    PaginatedAccessedCompanyList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessedCompany'
-    SeriesConsumption:
-      type: object
-      properties:
-        company_id:
-          type: integer
-          readOnly: true
-        current_series_per_company_limit:
-          type:
-          - string
-          - 'null'
-          readOnly: true
-        number_of_series_accessed_for_company:
-          type: integer
-          readOnly: true
-        series_accessed:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessedSeries'
-          readOnly: true
-      required:
-      - company_id
-      - current_series_per_company_limit
-      - number_of_series_accessed_for_company
-      - series_accessed
     HTTPValidationError:
       properties:
         detail:
@@ -657,6 +657,42 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    ConsumptionEventsResponse:
+      properties:
+        count:
+          type: integer
+          title: Count
+        results:
+          items:
+            $ref: '#/components/schemas/ConsumptionEvent_2'
+          type: array
+          title: Results
+      type: object
+      required:
+      - count
+      - results
+      title: ConsumptionEventsResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     ConsumptionResponse:
       properties:
         monthly_limit:
@@ -703,42 +739,6 @@ components:
       - number_of_datapoints
       - timestamp
       title: ConsumptionEvent
-    ConsumptionEventsResponse:
-      properties:
-        count:
-          type: integer
-          title: Count
-        results:
-          items:
-            $ref: '#/components/schemas/ConsumptionEvent_2'
-          type: array
-          title: Results
-      type: object
-      required:
-      - count
-      - results
-      title: ConsumptionEventsResponse
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
   securitySchemes:
     apiKeyAuth:
       type: http
@@ -746,4 +746,4 @@ components:
       description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'
 x-refined-from:
 - daloopa-api-openapi.yml
-- daloopa-mcp-service-openapi.json
+- daloopa-mcp-service-openapi-original.json

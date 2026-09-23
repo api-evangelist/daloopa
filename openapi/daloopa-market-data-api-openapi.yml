@@ -269,6 +269,20 @@ components:
       - low
       - open
       - volume
+    FactorTypeEnum:
+      enum:
+      - split
+      - cash_dividend
+      - spin_off
+      - other
+      type: string
+      description: '* `split` - Split
+
+        * `cash_dividend` - Cash Dividend
+
+        * `spin_off` - Spin Off
+
+        * `other` - Other'
     PaginatedAdjustmentFactorsList:
       type: object
       required:
@@ -319,20 +333,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MarketData'
-    FactorTypeEnum:
-      enum:
-      - split
-      - cash_dividend
-      - spin_off
-      - other
-      type: string
-      description: '* `split` - Split
-
-        * `cash_dividend` - Cash Dividend
-
-        * `spin_off` - Spin Off
-
-        * `other` - Other'
     AdjustmentFactors:
       type: object
       properties:

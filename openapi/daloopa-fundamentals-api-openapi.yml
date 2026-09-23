@@ -408,18 +408,31 @@ paths:
           description: ''
 components:
   schemas:
-    FundamentalDerivedComponents:
+    PaginatedFundamentalUpdatesList:
       type: object
+      required:
+      - count
+      - results
       properties:
-        formula:
-          type: string
-        components:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
           type: array
           items:
-            $ref: '#/components/schemas/FundamentalDerivedComponent'
-      required:
-      - components
-      - formula
+            $ref: '#/components/schemas/FundamentalUpdates'
     Fundamental:
       type: object
       properties:
@@ -525,32 +538,6 @@ components:
       - updated_at
       - value_normalized
       - value_raw
-    ValueErrorDetails:
-      type: object
-      properties:
-        field_changed:
-          type: string
-          description: Name of the field that was corrected in the datapoint
-        old_value:
-          type: number
-          format: double
-          description: Value before the correction was applied
-        new_value:
-          type: number
-          format: double
-          description: Value after the correction was applied
-        fundamental_id:
-          type: integer
-          description: Identifier of the affected fundamental datapoint
-        series_id:
-          type: integer
-          description: Identifier of the related series for the datapoint
-      required:
-      - field_changed
-      - fundamental_id
-      - new_value
-      - old_value
-      - series_id
     FundamentalDerivedComponent:
       type: object
       properties:
@@ -565,6 +552,43 @@ components:
       - component
       - fundamental_id
       - value
+    PaginatedFundamentalList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fundamental'
+    FundamentalDerivedComponents:
+      type: object
+      properties:
+        formula:
+          type: string
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundamentalDerivedComponent'
+      required:
+      - components
+      - formula
     FundamentalUpdates:
       type: object
       properties:
@@ -591,56 +615,32 @@ components:
       - period
       - run_date
       - type
-    PaginatedFundamentalUpdatesList:
+    ValueErrorDetails:
       type: object
-      required:
-      - count
-      - results
       properties:
-        count:
+        field_changed:
+          type: string
+          description: Name of the field that was corrected in the datapoint
+        old_value:
+          type: number
+          format: double
+          description: Value before the correction was applied
+        new_value:
+          type: number
+          format: double
+          description: Value after the correction was applied
+        fundamental_id:
           type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/FundamentalUpdates'
-    PaginatedFundamentalList:
-      type: object
+          description: Identifier of the affected fundamental datapoint
+        series_id:
+          type: integer
+          description: Identifier of the related series for the datapoint
       required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Fundamental'
+      - field_changed
+      - fundamental_id
+      - new_value
+      - old_value
+      - series_id
   securitySchemes:
     apiKeyAuth:
       type: http

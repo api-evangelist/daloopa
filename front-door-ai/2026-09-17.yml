@@ -1,0 +1,34 @@
+# Front Door AI Index — daloopa — 2026-09-17
+# AI vocabulary counted on the provider's root page. Generated; do not edit.
+# `score` is null unless ownership is `own` — see front_door_ai.py.
+front_door_ai:
+  slug: daloopa
+  lexicon_version: '1.0'
+  probed_at: '2026-09-17'
+  host: daloopa.com
+  final_host: daloopa.com
+  ownership: own
+  owner: daloopa
+  shares_host_with: null
+  inherited_from: null
+  verdict: scored
+  score: 30
+  host_score: 30
+  density: 40.43
+  words: 742
+  tiers:
+    agentic: 9
+    core: 19
+    model: 2
+  ambiguous: 11
+  top_terms:
+    AI: 16
+    agent: 8
+    AI agent: 4
+    MCP: 4
+    LLMs: 3
+    automation: 2
+    Anthropic: 1
+    OpenAI: 1
+    agentic: 1
+    smart: 1

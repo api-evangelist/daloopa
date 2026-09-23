@@ -233,6 +233,42 @@ components:
         * `CapIQCompanyTicker` - CapIQ Company Ticker
 
         * `ASXCode` - Australian Securities Exchange Company Identifier'
+    CompanyStatusQueryRequest:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: integer
+          description: List of company ids to check status for
+          maxItems: 500
+      required:
+      - companies
+    PaginatedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
     CompanyStatus:
       type: object
       properties:
@@ -268,31 +304,6 @@ components:
       - latest_datapoint_updated_at
       - latest_period
       - model_updated_at
-    PaginatedCompanyList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Company'
     Company:
       type: object
       description: Company serializer with industry, sector and companyidentifier_set as additional fields.
@@ -373,17 +384,6 @@ components:
       - latest_fiscal_quarter
       - model_updated_at
       - sector_
-    CompanyStatusQueryRequest:
-      type: object
-      properties:
-        companies:
-          type: array
-          items:
-            type: integer
-          description: List of company ids to check status for
-          maxItems: 500
-      required:
-      - companies
     CompanyIdentifier:
       type: object
       properties:

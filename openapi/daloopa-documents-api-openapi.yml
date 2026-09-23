@@ -598,73 +598,52 @@ paths:
           description: ''
 components:
   schemas:
-    RecommendedCallEnum:
-      enum:
-      - small_full
-      - large_with_section
-      - single_section_filing
-      - not_supported
-      type: string
-      description: '* `small_full` - small_full
-
-        * `large_with_section` - large_with_section
-
-        * `single_section_filing` - single_section_filing
-
-        * `not_supported` - not_supported'
-    DocumentSection:
+    BatchSearchOptionsRequest:
       type: object
-      description: A single named section of a document with its character length.
+      description: Serializer for batch search options.
       properties:
-        name:
-          type: string
-          description: Display name of the section
-        characters:
+        size:
           type: integer
-          description: Number of characters in the section
-      required:
-      - characters
-      - name
-    OperatorEnum:
-      enum:
-      - AND
-      - OR
-      type: string
-      description: '* `AND` - AND
-
-        * `OR` - OR'
-    LightweightBatchSearchResponse:
-      type: object
-      description: Serializer for lightweight batch search responses without positional information.
-      properties:
-        success:
-          type: boolean
-          description: Whether the search was successful
-        total_hits:
-          type: integer
-          description: Total number of matching documents (accurate based on fuzzy setting)
-        documents:
-          type: array
-          items:
-            $ref: '#/components/schemas/LightweightDocumentMatch'
-          description: List of matching documents with match_ids for current page
+          maximum: 100
+          minimum: 1
+          default: 10
+          description: Maximum number of documents to return per page (1-100)
         offset:
           type: integer
-          description: Current pagination offset
-        limit:
-          type: integer
-          description: Current page size limit
-        error:
-          type:
-          - string
-          - 'null'
-          description: Error message if search failed
+          minimum: 0
+          default: 0
+          description: 'Number of documents to skip for pagination (default: 0)'
+        operator:
+          allOf:
+          - $ref: '#/components/schemas/OperatorEnum'
+          default: OR
+          description: 'Search operator - ''AND'' requires all keywords, ''OR'' requires any keyword
+
+
+            * `AND` - AND
+
+            * `OR` - OR'
+        fuzzy:
+          type: boolean
+          default: false
+          description: 'Enable fuzzy matching (default: False). When False, only exact phrase matches are returned. When True, allows approximate matches but positional information may be unavailable.'
+    LightweightMatch:
+      type: object
+      description: Serializer for individual lightweight matches.
+      properties:
+        keyword:
+          type: string
+          description: The matched keyword
+        context:
+          type: string
+          description: Context snippet around the match
+        match_id:
+          type: string
+          description: Compact match ID for fetching positional info
       required:
-      - documents
-      - limit
-      - offset
-      - success
-      - total_hits
+      - context
+      - keyword
+      - match_id
     DocumentMetadataSerializerV3:
       type: object
       description: 'V3 document metadata response serializer.
@@ -718,6 +697,54 @@ components:
       - filing_type
       - filing_uid
       - fiscal_quarter
+    PaginatedDocumentMetadataSerializerV3List:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentMetadataSerializerV3'
+    DocumentRetrievalResponse:
+      type: object
+      description: Serializer for document retrieval responses including signed URL.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        signed_url:
+          type: string
+          format: uri
+          description: Signed URL for document access
+        url_expires_at:
+          type: string
+          format: date-time
+          description: URL expiration timestamp
+        file_type:
+          type: string
+          description: Type of the document file
+      required:
+      - document_id
+      - file_type
+      - signed_url
+      - url_expires_at
     DocumentContentResponse:
       type: object
       description: 'Flat response for GET /api/v2/documents/{id}/content.
@@ -756,34 +783,86 @@ components:
       - filing_type
       - number_of_characters
       - truncated
-    BatchSearchRequestSerializerV3Request:
+    LightweightDocumentMatch:
       type: object
-      description: 'V3 batch-search request.
-
-
-        Same shape as :class:`BatchSearchRequestSerializer` but nests the v3 filters
-
-        serializer, which drops the deprecated ``periods`` field.'
+      description: Serializer for lightweight document matches without positional information.
       properties:
-        keywords:
+        document_id:
+          type: integer
+          description: Document ID
+        company_id:
+          type:
+          - integer
+          - 'null'
+          description: Company ID
+        filing_type:
+          type:
+          - string
+          - 'null'
+          description: Filing type
+        affinitized_date:
+          type:
+          - string
+          - 'null'
+          description: Affinitized date
+        calendar_quarter:
+          type:
+          - string
+          - 'null'
+          description: Calendar quarter for the document (YYYYQ#)
+        fiscal_quarter:
+          type:
+          - string
+          - 'null'
+          description: Fiscal quarter for the document (YYYYQ#)
+        document_title:
+          type:
+          - string
+          - 'null'
+          description: Document title
+        score:
+          type: number
+          format: double
+          description: Relevance score
+        source_url:
+          type: string
+          description: Link to the document in the viewer. This endpoint does not resolve a page, so the link opens the document at the top.
+        matches:
           type: array
           items:
-            type: string
-            minLength: 1
-            maxLength: 200
-          description: List of keywords to search for (1-10 keywords)
-          maxItems: 10
-          minItems: 1
-        filters:
-          allOf:
-          - $ref: '#/components/schemas/BatchSearchFiltersSerializerV3Request'
-          description: Optional filters for document selection
-        options:
-          allOf:
-          - $ref: '#/components/schemas/BatchSearchOptionsRequest'
-          description: Optional search options
+            $ref: '#/components/schemas/LightweightMatch'
+          description: List of matches in this document, each with its own match_id
       required:
-      - keywords
+      - document_id
+      - matches
+      - score
+    DocumentSection:
+      type: object
+      description: A single named section of a document with its character length.
+      properties:
+        name:
+          type: string
+          description: Display name of the section
+        characters:
+          type: integer
+          description: Number of characters in the section
+      required:
+      - characters
+      - name
+    RecommendedCallEnum:
+      enum:
+      - small_full
+      - large_with_section
+      - single_section_filing
+      - not_supported
+      type: string
+      description: '* `small_full` - small_full
+
+        * `large_with_section` - large_with_section
+
+        * `single_section_filing` - single_section_filing
+
+        * `not_supported` - not_supported'
     DocumentMetadataResponse:
       type: object
       description: 'Serializer for the GET /api/v2/documents/{id}/metadata response.
@@ -853,6 +932,38 @@ components:
       - title
       - total_characters
       - total_sections
+    LightweightBatchSearchResponse:
+      type: object
+      description: Serializer for lightweight batch search responses without positional information.
+      properties:
+        success:
+          type: boolean
+          description: Whether the search was successful
+        total_hits:
+          type: integer
+          description: Total number of matching documents (accurate based on fuzzy setting)
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/LightweightDocumentMatch'
+          description: List of matching documents with match_ids for current page
+        offset:
+          type: integer
+          description: Current pagination offset
+        limit:
+          type: integer
+          description: Current page size limit
+        error:
+          type:
+          - string
+          - 'null'
+          description: Error message if search failed
+      required:
+      - documents
+      - limit
+      - offset
+      - success
+      - total_hits
     BatchSearchFiltersSerializerV3Request:
       type: object
       description: 'V3 batch-search filters.
@@ -898,153 +1009,42 @@ components:
             minLength: 1
             maxLength: 10
           description: One or more fiscal quarters in YYYYQ# format. Translated to each company's calendar quarters before filtering, so `company_ids` is required. Mutually exclusive with `calendar_quarters`.
-    LightweightMatch:
+    BatchSearchRequestSerializerV3Request:
       type: object
-      description: Serializer for individual lightweight matches.
+      description: 'V3 batch-search request.
+
+
+        Same shape as :class:`BatchSearchRequestSerializer` but nests the v3 filters
+
+        serializer, which drops the deprecated ``periods`` field.'
       properties:
-        keyword:
-          type: string
-          description: The matched keyword
-        context:
-          type: string
-          description: Context snippet around the match
-        match_id:
-          type: string
-          description: Compact match ID for fetching positional info
-      required:
-      - context
-      - keyword
-      - match_id
-    PaginatedDocumentMetadataSerializerV3List:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
+        keywords:
           type: array
           items:
-            $ref: '#/components/schemas/DocumentMetadataSerializerV3'
-    BatchSearchOptionsRequest:
-      type: object
-      description: Serializer for batch search options.
-      properties:
-        size:
-          type: integer
-          maximum: 100
-          minimum: 1
-          default: 10
-          description: Maximum number of documents to return per page (1-100)
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          description: 'Number of documents to skip for pagination (default: 0)'
-        operator:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: List of keywords to search for (1-10 keywords)
+          maxItems: 10
+          minItems: 1
+        filters:
           allOf:
-          - $ref: '#/components/schemas/OperatorEnum'
-          default: OR
-          description: 'Search operator - ''AND'' requires all keywords, ''OR'' requires any keyword
-
-
-            * `AND` - AND
-
-            * `OR` - OR'
-        fuzzy:
-          type: boolean
-          default: false
-          description: 'Enable fuzzy matching (default: False). When False, only exact phrase matches are returned. When True, allows approximate matches but positional information may be unavailable.'
-    LightweightDocumentMatch:
-      type: object
-      description: Serializer for lightweight document matches without positional information.
-      properties:
-        document_id:
-          type: integer
-          description: Document ID
-        company_id:
-          type:
-          - integer
-          - 'null'
-          description: Company ID
-        filing_type:
-          type:
-          - string
-          - 'null'
-          description: Filing type
-        affinitized_date:
-          type:
-          - string
-          - 'null'
-          description: Affinitized date
-        calendar_quarter:
-          type:
-          - string
-          - 'null'
-          description: Calendar quarter for the document (YYYYQ#)
-        fiscal_quarter:
-          type:
-          - string
-          - 'null'
-          description: Fiscal quarter for the document (YYYYQ#)
-        document_title:
-          type:
-          - string
-          - 'null'
-          description: Document title
-        score:
-          type: number
-          format: double
-          description: Relevance score
-        source_url:
-          type: string
-          description: Link to the document in the viewer. This endpoint does not resolve a page, so the link opens the document at the top.
-        matches:
-          type: array
-          items:
-            $ref: '#/components/schemas/LightweightMatch'
-          description: List of matches in this document, each with its own match_id
+          - $ref: '#/components/schemas/BatchSearchFiltersSerializerV3Request'
+          description: Optional filters for document selection
+        options:
+          allOf:
+          - $ref: '#/components/schemas/BatchSearchOptionsRequest'
+          description: Optional search options
       required:
-      - document_id
-      - matches
-      - score
-    DocumentRetrievalResponse:
-      type: object
-      description: Serializer for document retrieval responses including signed URL.
-      properties:
-        document_id:
-          type: integer
-          description: Unique document identifier
-        signed_url:
-          type: string
-          format: uri
-          description: Signed URL for document access
-        url_expires_at:
-          type: string
-          format: date-time
-          description: URL expiration timestamp
-        file_type:
-          type: string
-          description: Type of the document file
-      required:
-      - document_id
-      - file_type
-      - signed_url
-      - url_expires_at
+      - keywords
+    OperatorEnum:
+      enum:
+      - AND
+      - OR
+      type: string
+      description: '* `AND` - AND
+
+        * `OR` - OR'
   securitySchemes:
     apiKeyAuth:
       type: http
