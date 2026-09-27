@@ -135,6 +135,14 @@ paths:
           description: ''
 components:
   schemas:
+    OutputFormatEnum:
+      enum:
+      - csv
+      - parquet
+      type: string
+      description: '* `csv` - csv
+
+        * `parquet` - parquet'
     ExportModelSerializerV3:
       type: object
       description: 'V3 export query serializer.
@@ -164,14 +172,6 @@ components:
             * `csv` - csv
 
             * `parquet` - parquet'
-    OutputFormatEnum:
-      enum:
-      - csv
-      - parquet
-      type: string
-      description: '* `csv` - csv
-
-        * `parquet` - parquet'
   securitySchemes:
     apiKeyAuth:
       type: http

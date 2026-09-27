@@ -408,6 +408,31 @@ paths:
           description: ''
 components:
   schemas:
+    PaginatedFundamentalList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fundamental'
     PaginatedFundamentalUpdatesList:
       type: object
       required:
@@ -433,6 +458,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FundamentalUpdates'
+    FundamentalDerivedComponents:
+      type: object
+      properties:
+        formula:
+          type: string
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundamentalDerivedComponent'
+      required:
+      - components
+      - formula
     Fundamental:
       type: object
       properties:
@@ -538,83 +575,6 @@ components:
       - updated_at
       - value_normalized
       - value_raw
-    FundamentalDerivedComponent:
-      type: object
-      properties:
-        component:
-          type: string
-        fundamental_id:
-          type: integer
-        value:
-          type: number
-          format: double
-      required:
-      - component
-      - fundamental_id
-      - value
-    PaginatedFundamentalList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Fundamental'
-    FundamentalDerivedComponents:
-      type: object
-      properties:
-        formula:
-          type: string
-        components:
-          type: array
-          items:
-            $ref: '#/components/schemas/FundamentalDerivedComponent'
-      required:
-      - components
-      - formula
-    FundamentalUpdates:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Unique identifier for the update record
-        type:
-          type: string
-          description: Type of update event (e.g., correction, restatement)
-        period:
-          type: string
-          description: Period associated with the update (YYYYQQ/HH/FY format)
-        run_date:
-          type: string
-          format: date-time
-          description: Timestamp when the update process was executed
-        details:
-          allOf:
-          - $ref: '#/components/schemas/ValueErrorDetails'
-          description: Details describing the change applied to the datapoint
-      required:
-      - details
-      - id
-      - period
-      - run_date
-      - type
     ValueErrorDetails:
       type: object
       properties:
@@ -641,6 +601,46 @@ components:
       - new_value
       - old_value
       - series_id
+    FundamentalUpdates:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the update record
+        type:
+          type: string
+          description: Type of update event (e.g., correction, restatement)
+        period:
+          type: string
+          description: Period associated with the update (YYYYQQ/HH/FY format)
+        run_date:
+          type: string
+          format: date-time
+          description: Timestamp when the update process was executed
+        details:
+          allOf:
+          - $ref: '#/components/schemas/ValueErrorDetails'
+          description: Details describing the change applied to the datapoint
+      required:
+      - details
+      - id
+      - period
+      - run_date
+      - type
+    FundamentalDerivedComponent:
+      type: object
+      properties:
+        component:
+          type: string
+        fundamental_id:
+          type: integer
+        value:
+          type: number
+          format: double
+      required:
+      - component
+      - fundamental_id
+      - value
   securitySchemes:
     apiKeyAuth:
       type: http

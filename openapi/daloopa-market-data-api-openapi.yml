@@ -232,57 +232,6 @@ paths:
           description: ''
 components:
   schemas:
-    MarketData:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-          description: Trading date for the returned datapoint
-        open:
-          type: number
-          format: double
-          description: Opening price on the trading date (currency units)
-        high:
-          type: number
-          format: double
-          description: Highest price reached during the trading date
-        low:
-          type: number
-          format: double
-          description: Lowest price reached during the trading date
-        close:
-          type: number
-          format: double
-          description: Closing price on the trading date (currency units)
-        volume:
-          type: integer
-          description: Total traded volume for the trading date
-        adjusted:
-          type: boolean
-          description: Echo of the request's adjusted flag
-      required:
-      - adjusted
-      - close
-      - date
-      - high
-      - low
-      - open
-      - volume
-    FactorTypeEnum:
-      enum:
-      - split
-      - cash_dividend
-      - spin_off
-      - other
-      type: string
-      description: '* `split` - Split
-
-        * `cash_dividend` - Cash Dividend
-
-        * `spin_off` - Spin Off
-
-        * `other` - Other'
     PaginatedAdjustmentFactorsList:
       type: object
       required:
@@ -308,6 +257,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdjustmentFactors'
+    FactorTypeEnum:
+      enum:
+      - split
+      - cash_dividend
+      - spin_off
+      - other
+      type: string
+      description: '* `split` - Split
+
+        * `cash_dividend` - Cash Dividend
+
+        * `spin_off` - Spin Off
+
+        * `other` - Other'
     PaginatedMarketDataList:
       type: object
       required:
@@ -384,6 +347,43 @@ components:
       - factor_type
       - id
       - updated_at
+    MarketData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Trading date for the returned datapoint
+        open:
+          type: number
+          format: double
+          description: Opening price on the trading date (currency units)
+        high:
+          type: number
+          format: double
+          description: Highest price reached during the trading date
+        low:
+          type: number
+          format: double
+          description: Lowest price reached during the trading date
+        close:
+          type: number
+          format: double
+          description: Closing price on the trading date (currency units)
+        volume:
+          type: integer
+          description: Total traded volume for the trading date
+        adjusted:
+          type: boolean
+          description: Echo of the request's adjusted flag
+      required:
+      - adjusted
+      - close
+      - date
+      - high
+      - low
+      - open
+      - volume
   securitySchemes:
     apiKeyAuth:
       type: http

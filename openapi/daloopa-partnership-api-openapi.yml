@@ -113,6 +113,14 @@ paths:
           description: ''
 components:
   schemas:
+    PlanEnum:
+      enum:
+      - BASE
+      - PLUS
+      type: string
+      description: '* `BASE` - BASE
+
+        * `PLUS` - PLUS'
     PartnershipUserCreationRequest:
       type: object
       properties:
@@ -125,14 +133,6 @@ components:
       required:
       - email
       - plan
-    PlanEnum:
-      enum:
-      - BASE
-      - PLUS
-      type: string
-      description: '* `BASE` - BASE
-
-        * `PLUS` - PLUS'
   securitySchemes:
     apiKeyAuth:
       type: http

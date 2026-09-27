@@ -647,114 +647,6 @@ paths:
           description: ''
 components:
   schemas:
-    WebhookCreateRequest:
-      type: object
-      description: 'Validates the payload for creating a new webhook.
-
-
-        Required fields: ``url``, ``event_type``, ``is_test``.
-
-        Optional fields: ``header_name``, ``prefix``, ``auth_secret``.'
-      properties:
-        url:
-          type: string
-          format: uri
-          minLength: 1
-        event_type:
-          $ref: '#/components/schemas/EventTypeEnum'
-        is_test:
-          type: boolean
-        header_name:
-          type: string
-          minLength: 1
-        prefix:
-          type: string
-          minLength: 1
-        auth_secret:
-          type: string
-          minLength: 1
-      required:
-      - event_type
-      - is_test
-      - url
-    EventTypeEnum:
-      enum:
-      - clientview_updated
-      - incremental_update
-      - series_updated
-      - document_added
-      type: string
-      description: '* `clientview_updated` - Clientview Updated
-
-        * `incremental_update` - Incremental Update
-
-        * `series_updated` - Series Updated
-
-        * `document_added` - Document Added'
-    PaginatedWebhookFullReadList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/WebhookFullRead'
-    PatchedWebhookUpdateRequest:
-      type: object
-      description: 'Validates the payload for updating an existing webhook (PATCH).
-
-
-        All fields are optional, but at least one must be provided.'
-      properties:
-        url:
-          type: string
-          format: uri
-          minLength: 1
-        event_type:
-          $ref: '#/components/schemas/EventTypeEnum'
-        is_test:
-          type: boolean
-        active:
-          type: boolean
-        header_name:
-          type: string
-          minLength: 1
-        prefix:
-          type: string
-          minLength: 1
-        auth_secret:
-          type: string
-          minLength: 1
-    WebhookEventType:
-      type: object
-      description: Read-only representation of a supported webhook event type.
-      properties:
-        value:
-          type: string
-          readOnly: true
-        label:
-          type: string
-          readOnly: true
-      required:
-      - label
-      - value
     WebhookFullRead:
       type: object
       description: 'Read-only serializer for webhook responses (list, retrieve, create, update).
@@ -801,6 +693,114 @@ components:
       - masked_auth_secret
       - prefix
       - url
+    PatchedWebhookUpdateRequest:
+      type: object
+      description: 'Validates the payload for updating an existing webhook (PATCH).
+
+
+        All fields are optional, but at least one must be provided.'
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        active:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+    WebhookCreateRequest:
+      type: object
+      description: 'Validates the payload for creating a new webhook.
+
+
+        Required fields: ``url``, ``event_type``, ``is_test``.
+
+        Optional fields: ``header_name``, ``prefix``, ``auth_secret``.'
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+      required:
+      - event_type
+      - is_test
+      - url
+    EventTypeEnum:
+      enum:
+      - clientview_updated
+      - incremental_update
+      - series_updated
+      - document_added
+      type: string
+      description: '* `clientview_updated` - Clientview Updated
+
+        * `incremental_update` - Incremental Update
+
+        * `series_updated` - Series Updated
+
+        * `document_added` - Document Added'
+    WebhookEventType:
+      type: object
+      description: Read-only representation of a supported webhook event type.
+      properties:
+        value:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+    PaginatedWebhookFullReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookFullRead'
   securitySchemes:
     apiKeyAuth:
       type: http

@@ -52,23 +52,6 @@ paths:
           description: ''
 components:
   schemas:
-    IndustryModel:
-      type: object
-      properties:
-        model_id:
-          type: integer
-          description: Identifier for the published industry model
-        description:
-          type: string
-          description: Short description of the industry model contents
-        updated_at:
-          type: string
-          format: date-time
-          description: Timestamp when the industry model was last updated
-      required:
-      - description
-      - model_id
-      - updated_at
     CompanyIndustryModel:
       type: object
       properties:
@@ -87,6 +70,23 @@ components:
       - company_id
       - industry_models
       - isin
+    IndustryModel:
+      type: object
+      properties:
+        model_id:
+          type: integer
+          description: Identifier for the published industry model
+        description:
+          type: string
+          description: Short description of the industry model contents
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the industry model was last updated
+      required:
+      - description
+      - model_id
+      - updated_at
   securitySchemes:
     apiKeyAuth:
       type: http
