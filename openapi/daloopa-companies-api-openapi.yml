@@ -201,78 +201,6 @@ paths:
           description: ''
 components:
   schemas:
-    PaginatedCompanyList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Company'
-    CompanyStatusQueryRequest:
-      type: object
-      properties:
-        companies:
-          type: array
-          items:
-            type: integer
-          description: List of company ids to check status for
-          maxItems: 500
-      required:
-      - companies
-    CompanyIdentifier:
-      type: object
-      properties:
-        identifier_type:
-          allOf:
-          - $ref: '#/components/schemas/IdentifierTypeEnum'
-          description: 'Type of identifier (e.g., ISIN, CIK, ticker)
-
-
-            * `CIK` - Identifier used by SEC
-
-            * `ISIN` - International Securities Identification Number
-
-            * `CUSIP` - US and Canada
-
-            * `SEDOL` - UK and Ireland
-
-            * `FIGI` - Bloomberg
-
-            * `PRIVATE` - private company data with public identifiers
-
-            * `CompanyHouseId` - company house identifier
-
-            * `CapIQCompanyId` - CapIQ Company identifier
-
-            * `CapIQCompanyTicker` - CapIQ Company Ticker
-
-            * `ASXCode` - Australian Securities Exchange Company Identifier'
-        identifier_value:
-          type:
-          - string
-          - 'null'
-          description: Identifier value corresponding to the identifier type
-          maxLength: 255
-      required:
-      - identifier_type
     Company:
       type: object
       description: Company serializer with industry, sector and companyidentifier_set as additional fields.
@@ -353,38 +281,17 @@ components:
       - latest_fiscal_quarter
       - model_updated_at
       - sector_
-    IdentifierTypeEnum:
-      enum:
-      - CIK
-      - ISIN
-      - CUSIP
-      - SEDOL
-      - FIGI
-      - PRIVATE
-      - CompanyHouseId
-      - CapIQCompanyId
-      - CapIQCompanyTicker
-      - ASXCode
-      type: string
-      description: '* `CIK` - Identifier used by SEC
-
-        * `ISIN` - International Securities Identification Number
-
-        * `CUSIP` - US and Canada
-
-        * `SEDOL` - UK and Ireland
-
-        * `FIGI` - Bloomberg
-
-        * `PRIVATE` - private company data with public identifiers
-
-        * `CompanyHouseId` - company house identifier
-
-        * `CapIQCompanyId` - CapIQ Company identifier
-
-        * `CapIQCompanyTicker` - CapIQ Company Ticker
-
-        * `ASXCode` - Australian Securities Exchange Company Identifier'
+    CompanyStatusQueryRequest:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: integer
+          description: List of company ids to check status for
+          maxItems: 500
+      required:
+      - companies
     CompanyStatus:
       type: object
       properties:
@@ -420,6 +327,99 @@ components:
       - latest_datapoint_updated_at
       - latest_period
       - model_updated_at
+    IdentifierTypeEnum:
+      enum:
+      - CIK
+      - ISIN
+      - CUSIP
+      - SEDOL
+      - FIGI
+      - PRIVATE
+      - CompanyHouseId
+      - CapIQCompanyId
+      - CapIQCompanyTicker
+      - ASXCode
+      type: string
+      description: '* `CIK` - Identifier used by SEC
+
+        * `ISIN` - International Securities Identification Number
+
+        * `CUSIP` - US and Canada
+
+        * `SEDOL` - UK and Ireland
+
+        * `FIGI` - Bloomberg
+
+        * `PRIVATE` - private company data with public identifiers
+
+        * `CompanyHouseId` - company house identifier
+
+        * `CapIQCompanyId` - CapIQ Company identifier
+
+        * `CapIQCompanyTicker` - CapIQ Company Ticker
+
+        * `ASXCode` - Australian Securities Exchange Company Identifier'
+    PaginatedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+    CompanyIdentifier:
+      type: object
+      properties:
+        identifier_type:
+          allOf:
+          - $ref: '#/components/schemas/IdentifierTypeEnum'
+          description: 'Type of identifier (e.g., ISIN, CIK, ticker)
+
+
+            * `CIK` - Identifier used by SEC
+
+            * `ISIN` - International Securities Identification Number
+
+            * `CUSIP` - US and Canada
+
+            * `SEDOL` - UK and Ireland
+
+            * `FIGI` - Bloomberg
+
+            * `PRIVATE` - private company data with public identifiers
+
+            * `CompanyHouseId` - company house identifier
+
+            * `CapIQCompanyId` - CapIQ Company identifier
+
+            * `CapIQCompanyTicker` - CapIQ Company Ticker
+
+            * `ASXCode` - Australian Securities Exchange Company Identifier'
+        identifier_value:
+          type:
+          - string
+          - 'null'
+          description: Identifier value corresponding to the identifier type
+          maxLength: 255
+      required:
+      - identifier_type
   securitySchemes:
     apiKeyAuth:
       type: http

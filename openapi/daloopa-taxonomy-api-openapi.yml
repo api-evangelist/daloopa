@@ -384,44 +384,46 @@ paths:
           description: ''
 components:
   schemas:
-    TaxonomySectorIndustry:
+    TaxonomyIndustryCompany:
       type: object
       properties:
-        industry_id:
+        id:
           type: integer
-          description: IndustryClassification identifier for the industry
+          description: Unique identifier for the company within the taxonomy result
+        ticker:
+          type: string
+          description: Ticker symbol for the company within the taxonomy result
         name:
           type: string
-          description: Display name of the industry using Global Industry Classification Standard (GICS)
+          description: Company name displayed in the taxonomy result
       required:
-      - industry_id
+      - id
       - name
-    TaxonomyIndustry:
+      - ticker
+    TaxonomyMetricSeriesItem:
       type: object
       properties:
-        industry_id:
+        company_id:
           type: integer
-          description: IndustryClassification identifier for the industry
-        name:
+          description: Identifier of the company the series belongs to
+        ticker:
           type: string
-          default: ''
-          description: Display name of the industry using Global Industry Classification Standard (GICS)
-        sector_id:
+          description: Ticker symbol of the company the series belongs to
+        series_id:
           type: integer
-          description: Identifier of the parent sector
-        sector_name:
+          description: Identifier of the series associated with the metric
+        full_series_name:
           type: string
-          default: ''
-          description: Display name of the parent sector using Global Industry Classification Standard (GICS)
-        companies:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaxonomyIndustryCompany'
-          description: Companies that belong to the industry
+          description: Full descriptive name of the series
+        is_fallback_series:
+          type: boolean
+          default: false
+          description: Indicates whether the series is a fallback series for the metric
       required:
-      - companies
-      - industry_id
-      - sector_id
+      - company_id
+      - full_series_name
+      - series_id
+      - ticker
     TaxonomyMetricData:
       type: object
       properties:
@@ -482,6 +484,24 @@ components:
       - metrics
       - name
       - sectors
+    TaxonomySector:
+      type: object
+      properties:
+        sector_id:
+          type: integer
+          description: Unique identifier for the sector
+        sector_name:
+          type: string
+          default: ''
+          description: Display name of the sector using Global Industry Classification Standard (GICS)
+        industries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomySectorIndustry'
+          description: Ops industries that belong to the sector
+      required:
+      - industries
+      - sector_id
     PaginatedTaxonomyIndustryList:
       type: object
       required:
@@ -507,59 +527,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TaxonomyIndustry'
-    TaxonomySector:
+    TaxonomySectorIndustry:
       type: object
       properties:
-        sector_id:
+        industry_id:
           type: integer
-          description: Unique identifier for the sector
-        sector_name:
-          type: string
-          default: ''
-          description: Display name of the sector using Global Industry Classification Standard (GICS)
-        industries:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaxonomySectorIndustry'
-          description: Ops industries that belong to the sector
-      required:
-      - industries
-      - sector_id
-    TaxonomyMetricSeriesItem:
-      type: object
-      properties:
-        company_id:
-          type: integer
-          description: Identifier of the company the series belongs to
-        ticker:
-          type: string
-          description: Ticker symbol of the company the series belongs to
-        series_id:
-          type: integer
-          description: Identifier of the series associated with the metric
-        full_series_name:
-          type: string
-          description: Full descriptive name of the series
-        is_fallback_series:
-          type: boolean
-          default: false
-          description: Indicates whether the series is a fallback series for the metric
-      required:
-      - company_id
-      - full_series_name
-      - series_id
-      - ticker
-    TaxonomyIndustryTemplateSector:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Unique identifier for the sector
+          description: IndustryClassification identifier for the industry
         name:
           type: string
-          description: Display name of the sector using Global Industry Classification Standard (GICS)
+          description: Display name of the industry using Global Industry Classification Standard (GICS)
       required:
-      - id
+      - industry_id
       - name
     TaxonomyIndustryTemplateMetric:
       type: object
@@ -587,67 +565,6 @@ components:
       - series
       - taxonomy_metric_id
       - taxonomy_metric_name
-    TaxonomyIndustryTemplateSeries:
-      type: object
-      properties:
-        company_id:
-          type: integer
-          description: Identifier of the company the series belongs to
-        company_ticker:
-          type: string
-          description: Ticker symbol of the company the series belongs to
-        api_series_id:
-          type: integer
-          description: Identifier of the series associated with the metric
-        full_series_name:
-          type: string
-          description: Full descriptive name of the series
-      required:
-      - api_series_id
-      - company_id
-      - company_ticker
-      - full_series_name
-    PaginatedTaxonomyMetricList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaxonomyMetric'
-    TaxonomyIndustryCompany:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Unique identifier for the company within the taxonomy result
-        ticker:
-          type: string
-          description: Ticker symbol for the company within the taxonomy result
-        name:
-          type: string
-          description: Company name displayed in the taxonomy result
-      required:
-      - id
-      - name
-      - ticker
     PaginatedTaxonomySectorList:
       type: object
       required:
@@ -673,6 +590,63 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TaxonomySector'
+    TaxonomyIndustryTemplateSeries:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the series belongs to
+        company_ticker:
+          type: string
+          description: Ticker symbol of the company the series belongs to
+        api_series_id:
+          type: integer
+          description: Identifier of the series associated with the metric
+        full_series_name:
+          type: string
+          description: Full descriptive name of the series
+      required:
+      - api_series_id
+      - company_id
+      - company_ticker
+      - full_series_name
+    TaxonomyIndustryTemplateSector:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the sector
+        name:
+          type: string
+          description: Display name of the sector using Global Industry Classification Standard (GICS)
+      required:
+      - id
+      - name
+    PaginatedTaxonomyMetricList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyMetric'
     TaxonomyMetric:
       type: object
       properties:
@@ -703,6 +677,32 @@ components:
           description: Financial statement sections where this metric may appear (e.g. Income Statement, Balance Sheet)
       required:
       - metric_id
+    TaxonomyIndustry:
+      type: object
+      properties:
+        industry_id:
+          type: integer
+          description: IndustryClassification identifier for the industry
+        name:
+          type: string
+          default: ''
+          description: Display name of the industry using Global Industry Classification Standard (GICS)
+        sector_id:
+          type: integer
+          description: Identifier of the parent sector
+        sector_name:
+          type: string
+          default: ''
+          description: Display name of the parent sector using Global Industry Classification Standard (GICS)
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyIndustryCompany'
+          description: Companies that belong to the industry
+      required:
+      - companies
+      - industry_id
+      - sector_id
   securitySchemes:
     apiKeyAuth:
       type: http

@@ -271,6 +271,43 @@ components:
         * `spin_off` - Spin Off
 
         * `other` - Other'
+    MarketData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Trading date for the returned datapoint
+        open:
+          type: number
+          format: double
+          description: Opening price on the trading date (currency units)
+        high:
+          type: number
+          format: double
+          description: Highest price reached during the trading date
+        low:
+          type: number
+          format: double
+          description: Lowest price reached during the trading date
+        close:
+          type: number
+          format: double
+          description: Closing price on the trading date (currency units)
+        volume:
+          type: integer
+          description: Total traded volume for the trading date
+        adjusted:
+          type: boolean
+          description: Echo of the request's adjusted flag
+      required:
+      - adjusted
+      - close
+      - date
+      - high
+      - low
+      - open
+      - volume
     PaginatedMarketDataList:
       type: object
       required:
@@ -347,43 +384,6 @@ components:
       - factor_type
       - id
       - updated_at
-    MarketData:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-          description: Trading date for the returned datapoint
-        open:
-          type: number
-          format: double
-          description: Opening price on the trading date (currency units)
-        high:
-          type: number
-          format: double
-          description: Highest price reached during the trading date
-        low:
-          type: number
-          format: double
-          description: Lowest price reached during the trading date
-        close:
-          type: number
-          format: double
-          description: Closing price on the trading date (currency units)
-        volume:
-          type: integer
-          description: Total traded volume for the trading date
-        adjusted:
-          type: boolean
-          description: Echo of the request's adjusted flag
-      required:
-      - adjusted
-      - close
-      - date
-      - high
-      - low
-      - open
-      - volume
   securitySchemes:
     apiKeyAuth:
       type: http

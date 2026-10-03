@@ -408,6 +408,46 @@ paths:
           description: ''
 components:
   schemas:
+    FundamentalDerivedComponent:
+      type: object
+      properties:
+        component:
+          type: string
+        fundamental_id:
+          type: integer
+        value:
+          type: number
+          format: double
+      required:
+      - component
+      - fundamental_id
+      - value
+    FundamentalUpdates:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the update record
+        type:
+          type: string
+          description: Type of update event (e.g., correction, restatement)
+        period:
+          type: string
+          description: Period associated with the update (YYYYQQ/HH/FY format)
+        run_date:
+          type: string
+          format: date-time
+          description: Timestamp when the update process was executed
+        details:
+          allOf:
+          - $ref: '#/components/schemas/ValueErrorDetails'
+          description: Details describing the change applied to the datapoint
+      required:
+      - details
+      - id
+      - period
+      - run_date
+      - type
     PaginatedFundamentalList:
       type: object
       required:
@@ -458,6 +498,32 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FundamentalUpdates'
+    ValueErrorDetails:
+      type: object
+      properties:
+        field_changed:
+          type: string
+          description: Name of the field that was corrected in the datapoint
+        old_value:
+          type: number
+          format: double
+          description: Value before the correction was applied
+        new_value:
+          type: number
+          format: double
+          description: Value after the correction was applied
+        fundamental_id:
+          type: integer
+          description: Identifier of the affected fundamental datapoint
+        series_id:
+          type: integer
+          description: Identifier of the related series for the datapoint
+      required:
+      - field_changed
+      - fundamental_id
+      - new_value
+      - old_value
+      - series_id
     FundamentalDerivedComponents:
       type: object
       properties:
@@ -575,72 +641,6 @@ components:
       - updated_at
       - value_normalized
       - value_raw
-    ValueErrorDetails:
-      type: object
-      properties:
-        field_changed:
-          type: string
-          description: Name of the field that was corrected in the datapoint
-        old_value:
-          type: number
-          format: double
-          description: Value before the correction was applied
-        new_value:
-          type: number
-          format: double
-          description: Value after the correction was applied
-        fundamental_id:
-          type: integer
-          description: Identifier of the affected fundamental datapoint
-        series_id:
-          type: integer
-          description: Identifier of the related series for the datapoint
-      required:
-      - field_changed
-      - fundamental_id
-      - new_value
-      - old_value
-      - series_id
-    FundamentalUpdates:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Unique identifier for the update record
-        type:
-          type: string
-          description: Type of update event (e.g., correction, restatement)
-        period:
-          type: string
-          description: Period associated with the update (YYYYQQ/HH/FY format)
-        run_date:
-          type: string
-          format: date-time
-          description: Timestamp when the update process was executed
-        details:
-          allOf:
-          - $ref: '#/components/schemas/ValueErrorDetails'
-          description: Details describing the change applied to the datapoint
-      required:
-      - details
-      - id
-      - period
-      - run_date
-      - type
-    FundamentalDerivedComponent:
-      type: object
-      properties:
-        component:
-          type: string
-        fundamental_id:
-          type: integer
-        value:
-          type: number
-          format: double
-      required:
-      - component
-      - fundamental_id
-      - value
   securitySchemes:
     apiKeyAuth:
       type: http
