@@ -923,6 +923,9 @@ apis:
   - type: APIReference
     url: https://mcp.daloopa.com/redoc
 common:
+- type: CapabilityMap
+  url: capabilities/daloopa-capability-edges.yml
+  name: Daloopa Business Capability Map
 - type: Overlay
   url: overlays/daloopa-api-security-overlay.yaml
 - type: MCPServer
