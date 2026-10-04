@@ -201,6 +201,74 @@ paths:
           description: ''
 components:
   schemas:
+    PaginatedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+    CompanyStatusQueryRequest:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: integer
+          description: List of company ids to check status for
+          maxItems: 500
+      required:
+      - companies
+    IdentifierTypeEnum:
+      enum:
+      - CIK
+      - ISIN
+      - CUSIP
+      - SEDOL
+      - FIGI
+      - PRIVATE
+      - CompanyHouseId
+      - CapIQCompanyId
+      - CapIQCompanyTicker
+      - ASXCode
+      type: string
+      description: '* `CIK` - Identifier used by SEC
+
+        * `ISIN` - International Securities Identification Number
+
+        * `CUSIP` - US and Canada
+
+        * `SEDOL` - UK and Ireland
+
+        * `FIGI` - Bloomberg
+
+        * `PRIVATE` - private company data with public identifiers
+
+        * `CompanyHouseId` - company house identifier
+
+        * `CapIQCompanyId` - CapIQ Company identifier
+
+        * `CapIQCompanyTicker` - CapIQ Company Ticker
+
+        * `ASXCode` - Australian Securities Exchange Company Identifier'
     Company:
       type: object
       description: Company serializer with industry, sector and companyidentifier_set as additional fields.
@@ -281,109 +349,6 @@ components:
       - latest_fiscal_quarter
       - model_updated_at
       - sector_
-    CompanyStatusQueryRequest:
-      type: object
-      properties:
-        companies:
-          type: array
-          items:
-            type: integer
-          description: List of company ids to check status for
-          maxItems: 500
-      required:
-      - companies
-    CompanyStatus:
-      type: object
-      properties:
-        company_id:
-          type: integer
-          description: Unique identifier for the company
-        latest_datapoint_created_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Timestamp when the latest publish notification for the company was created. Falls back to the company's live Excel model `created_at` when no active non-clientview notification exists.
-        latest_datapoint_updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: 'Timestamp of the latest data change for the company: max of the most recent DELETE event in FundamentalEventLog and the most recent incremental-update error in FundamentalErrors. Null if neither exists.'
-        latest_period:
-          type:
-          - string
-          - 'null'
-          description: Most recent period for which data exists.
-        model_updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Timestamp when the company's Excel model was last touched.
-      required:
-      - company_id
-      - latest_datapoint_created_at
-      - latest_datapoint_updated_at
-      - latest_period
-      - model_updated_at
-    IdentifierTypeEnum:
-      enum:
-      - CIK
-      - ISIN
-      - CUSIP
-      - SEDOL
-      - FIGI
-      - PRIVATE
-      - CompanyHouseId
-      - CapIQCompanyId
-      - CapIQCompanyTicker
-      - ASXCode
-      type: string
-      description: '* `CIK` - Identifier used by SEC
-
-        * `ISIN` - International Securities Identification Number
-
-        * `CUSIP` - US and Canada
-
-        * `SEDOL` - UK and Ireland
-
-        * `FIGI` - Bloomberg
-
-        * `PRIVATE` - private company data with public identifiers
-
-        * `CompanyHouseId` - company house identifier
-
-        * `CapIQCompanyId` - CapIQ Company identifier
-
-        * `CapIQCompanyTicker` - CapIQ Company Ticker
-
-        * `ASXCode` - Australian Securities Exchange Company Identifier'
-    PaginatedCompanyList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Company'
     CompanyIdentifier:
       type: object
       properties:
@@ -420,6 +385,41 @@ components:
           maxLength: 255
       required:
       - identifier_type
+    CompanyStatus:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Unique identifier for the company
+        latest_datapoint_created_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Timestamp when the latest publish notification for the company was created. Falls back to the company's live Excel model `created_at` when no active non-clientview notification exists.
+        latest_datapoint_updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: 'Timestamp of the latest data change for the company: max of the most recent DELETE event in FundamentalEventLog and the most recent incremental-update error in FundamentalErrors. Null if neither exists.'
+        latest_period:
+          type:
+          - string
+          - 'null'
+          description: Most recent period for which data exists.
+        model_updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Timestamp when the company's Excel model was last touched.
+      required:
+      - company_id
+      - latest_datapoint_created_at
+      - latest_datapoint_updated_at
+      - latest_period
+      - model_updated_at
   securitySchemes:
     apiKeyAuth:
       type: http

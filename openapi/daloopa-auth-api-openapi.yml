@@ -258,6 +258,15 @@ paths:
               schema: {}
 components:
   schemas:
+    Body_api_key_token_auth_token_post:
+      properties:
+        api_key:
+          type: string
+          title: Api Key
+      type: object
+      required:
+      - api_key
+      title: Body_api_key_token_auth_token_post
     Body_sso_login_sso_login_post:
       properties:
         client_id:
@@ -301,6 +310,58 @@ components:
       - client_name
       - redirect_uris
       title: Body_register_client_register_post
+    Body_token_token_post:
+      properties:
+        grant_type:
+          type: string
+          title: Grant Type
+        code:
+          type: string
+          title: Code
+        redirect_uri:
+          type: string
+          title: Redirect Uri
+        client_id:
+          type: string
+          title: Client Id
+        client_secret:
+          type: string
+          title: Client Secret
+        code_verifier:
+          type: string
+          title: Code Verifier
+      type: object
+      title: Body_token_token_post
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     Body_login_login_post:
       properties:
         email:
@@ -333,64 +394,3 @@ components:
       - code_challenge
       - state
       title: Body_login_login_post
-    Body_api_key_token_auth_token_post:
-      properties:
-        api_key:
-          type: string
-          title: Api Key
-      type: object
-      required:
-      - api_key
-      title: Body_api_key_token_auth_token_post
-    Body_token_token_post:
-      properties:
-        grant_type:
-          type: string
-          title: Grant Type
-        code:
-          type: string
-          title: Code
-        redirect_uri:
-          type: string
-          title: Redirect Uri
-        client_id:
-          type: string
-          title: Client Id
-        client_secret:
-          type: string
-          title: Client Secret
-        code_verifier:
-          type: string
-          title: Code Verifier
-      type: object
-      title: Body_token_token_post
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError

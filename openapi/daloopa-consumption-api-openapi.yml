@@ -488,65 +488,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    Consumption:
-      type: object
-      properties:
-        monthly_limit:
-          type: string
-          description: Monthly datapoint consumption limit for the account
-        consumption:
-          type: integer
-          description: Number of datapoints consumed within the requested window
-        initial_date:
-          type: string
-          format: date
-          description: Start date used to calculate consumption
-        final_date:
-          type: string
-          format: date
-          description: End date used to calculate consumption
-      required:
-      - consumption
-      - final_date
-      - initial_date
-      - monthly_limit
-    AccessedSeries:
-      type: object
-      properties:
-        series_id:
-          type: integer
-          readOnly: true
-        full_series_name:
-          type: string
-          readOnly: true
-      required:
-      - full_series_name
-      - series_id
-    PaginatedAccessedCompanyList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessedCompany'
     ConsumptionEvent:
       type: object
       properties:
@@ -623,6 +564,65 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConsumptionEvent'
+    AccessedSeries:
+      type: object
+      properties:
+        series_id:
+          type: integer
+          readOnly: true
+        full_series_name:
+          type: string
+          readOnly: true
+      required:
+      - full_series_name
+      - series_id
+    Consumption:
+      type: object
+      properties:
+        monthly_limit:
+          type: string
+          description: Monthly datapoint consumption limit for the account
+        consumption:
+          type: integer
+          description: Number of datapoints consumed within the requested window
+        initial_date:
+          type: string
+          format: date
+          description: Start date used to calculate consumption
+        final_date:
+          type: string
+          format: date
+          description: End date used to calculate consumption
+      required:
+      - consumption
+      - final_date
+      - initial_date
+      - monthly_limit
+    PaginatedAccessedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedCompany'
     AccessedCompany:
       type: object
       properties:
@@ -648,29 +648,6 @@ components:
       - company_name
       - first_accessed_at
       - ticker
-    ConsumptionResponse:
-      properties:
-        monthly_limit:
-          type: string
-          title: Monthly Limit
-        consumption:
-          type: integer
-          title: Consumption
-        initial_date:
-          type: string
-          format: date
-          title: Initial Date
-        final_date:
-          type: string
-          format: date
-          title: Final Date
-      type: object
-      required:
-      - monthly_limit
-      - consumption
-      - initial_date
-      - final_date
-      title: ConsumptionResponse
     ConsumptionEvent_2:
       properties:
         source:
@@ -694,15 +671,6 @@ components:
       - number_of_datapoints
       - timestamp
       title: ConsumptionEvent
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     ConsumptionEventsResponse:
       properties:
         count:
@@ -718,6 +686,29 @@ components:
       - count
       - results
       title: ConsumptionEventsResponse
+    ConsumptionResponse:
+      properties:
+        monthly_limit:
+          type: string
+          title: Monthly Limit
+        consumption:
+          type: integer
+          title: Consumption
+        initial_date:
+          type: string
+          format: date
+          title: Initial Date
+        final_date:
+          type: string
+          format: date
+          title: Final Date
+      type: object
+      required:
+      - monthly_limit
+      - consumption
+      - initial_date
+      - final_date
+      title: ConsumptionResponse
     ValidationError:
       properties:
         loc:
@@ -739,6 +730,15 @@ components:
       - msg
       - type
       title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
   securitySchemes:
     apiKeyAuth:
       type: http
