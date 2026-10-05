@@ -1,0 +1,12 @@
+{
+ "url": "https://app.daloopa.com/swagger.json",
+ "requested_url": "https://app.daloopa.com/swagger.json",
+ "status": 200,
+ "content_type": "application/yaml; charset=utf-8",
+ "bytes": 200511,
+ "sha256": "96fe63fe2f4d3f68dc4bd83534460119f5ab2664d9bd6cb06c3a0d405f5d7583",
+ "fetched_at": "2026-10-04",
+ "fetched_by": "APIEvangelist-Harvest/1.0 (+https://apievangelist.com)",
+ "match": "equivalent",
+ "note": "Re-fetched from the provider by verify-openapi-sources.py; the provider's current document describes the same operations (Jaccard 0.953), but the bytes differ, so the archive is an earlier or reformatted copy."
+}
