@@ -176,6 +176,18 @@ paths:
           description: ''
 components:
   schemas:
+    HierarchyLevel:
+      type: object
+      properties:
+        level:
+          type: integer
+          description: Depth level in the hierarchy (1-based)
+        label:
+          type: string
+          description: Label for this hierarchy level
+      required:
+      - label
+      - level
     CompanySeriesResponse:
       type: object
       description: 'Serializer for the response of CompanySeriesService.get_company_series method.
@@ -204,18 +216,6 @@ components:
       - hierarchy
       - id
       - row_number
-    HierarchyLevel:
-      type: object
-      properties:
-        level:
-          type: integer
-          description: Depth level in the hierarchy (1-based)
-        label:
-          type: string
-          description: Label for this hierarchy level
-      required:
-      - label
-      - level
   securitySchemes:
     apiKeyAuth:
       type: http

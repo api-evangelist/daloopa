@@ -598,86 +598,6 @@ paths:
           description: ''
 components:
   schemas:
-    DocumentMetadataSerializerV3:
-      type: object
-      description: 'V3 document metadata response serializer.
-
-
-        Same shape as :class:`DocumentMetadataSerializer` but without the deprecated
-
-        ``period`` output field. Kept as a standalone class so it is trivial to
-
-        delete once v2 is sunset.'
-      properties:
-        document_id:
-          type: integer
-          description: Unique document identifier
-        filing_date:
-          type:
-          - string
-          - 'null'
-          format: date
-          description: Date when the filing was reported
-        filing_type:
-          type:
-          - string
-          - 'null'
-          description: Type of Filing (e.g., '10-Q', '10-K')
-        document_type:
-          type:
-          - string
-          - 'null'
-          description: Document type classification
-        filing_uid:
-          type:
-          - string
-          - 'null'
-          description: SEC filing unique identifier
-        calendar_quarter:
-          type:
-          - string
-          - 'null'
-          description: Calendar quarter for the document in YYYYQ# format.
-        fiscal_quarter:
-          type:
-          - string
-          - 'null'
-          description: Fiscal quarter for the document in YYYYQ# format.
-      required:
-      - calendar_quarter
-      - document_id
-      - document_type
-      - filing_date
-      - filing_type
-      - filing_uid
-      - fiscal_quarter
-    RecommendedCallEnum:
-      enum:
-      - small_full
-      - large_with_section
-      - single_section_filing
-      - not_supported
-      type: string
-      description: '* `small_full` - small_full
-
-        * `large_with_section` - large_with_section
-
-        * `single_section_filing` - single_section_filing
-
-        * `not_supported` - not_supported'
-    DocumentSection:
-      type: object
-      description: A single named section of a document with its character length.
-      properties:
-        name:
-          type: string
-          description: Display name of the section
-        characters:
-          type: integer
-          description: Number of characters in the section
-      required:
-      - characters
-      - name
     LightweightDocumentMatch:
       type: object
       description: Serializer for lightweight document matches without positional information.
@@ -748,38 +668,88 @@ components:
       - context
       - keyword
       - match_id
-    LightweightBatchSearchResponse:
+    BatchSearchOptionsRequest:
       type: object
-      description: Serializer for lightweight batch search responses without positional information.
+      description: Serializer for batch search options.
       properties:
-        success:
-          type: boolean
-          description: Whether the search was successful
-        total_hits:
+        size:
           type: integer
-          description: Total number of matching documents (accurate based on fuzzy setting)
-        documents:
-          type: array
-          items:
-            $ref: '#/components/schemas/LightweightDocumentMatch'
-          description: List of matching documents with match_ids for current page
+          maximum: 100
+          minimum: 1
+          default: 10
+          description: Maximum number of documents to return per page (1-100)
         offset:
           type: integer
-          description: Current pagination offset
-        limit:
+          minimum: 0
+          default: 0
+          description: 'Number of documents to skip for pagination (default: 0)'
+        operator:
+          allOf:
+          - $ref: '#/components/schemas/OperatorEnum'
+          default: OR
+          description: 'Search operator - ''AND'' requires all keywords, ''OR'' requires any keyword
+
+
+            * `AND` - AND
+
+            * `OR` - OR'
+        fuzzy:
+          type: boolean
+          default: false
+          description: 'Enable fuzzy matching (default: False). When False, only exact phrase matches are returned. When True, allows approximate matches but positional information may be unavailable.'
+    DocumentMetadataSerializerV3:
+      type: object
+      description: 'V3 document metadata response serializer.
+
+
+        Same shape as :class:`DocumentMetadataSerializer` but without the deprecated
+
+        ``period`` output field. Kept as a standalone class so it is trivial to
+
+        delete once v2 is sunset.'
+      properties:
+        document_id:
           type: integer
-          description: Current page size limit
-        error:
+          description: Unique document identifier
+        filing_date:
           type:
           - string
           - 'null'
-          description: Error message if search failed
+          format: date
+          description: Date when the filing was reported
+        filing_type:
+          type:
+          - string
+          - 'null'
+          description: Type of Filing (e.g., '10-Q', '10-K')
+        document_type:
+          type:
+          - string
+          - 'null'
+          description: Document type classification
+        filing_uid:
+          type:
+          - string
+          - 'null'
+          description: SEC filing unique identifier
+        calendar_quarter:
+          type:
+          - string
+          - 'null'
+          description: Calendar quarter for the document in YYYYQ# format.
+        fiscal_quarter:
+          type:
+          - string
+          - 'null'
+          description: Fiscal quarter for the document in YYYYQ# format.
       required:
-      - documents
-      - limit
-      - offset
-      - success
-      - total_hits
+      - calendar_quarter
+      - document_id
+      - document_type
+      - filing_date
+      - filing_type
+      - filing_uid
+      - fiscal_quarter
     DocumentContentResponse:
       type: object
       description: 'Flat response for GET /api/v2/documents/{id}/content.
@@ -818,6 +788,58 @@ components:
       - filing_type
       - number_of_characters
       - truncated
+    PaginatedDocumentMetadataSerializerV3List:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentMetadataSerializerV3'
+    RecommendedCallEnum:
+      enum:
+      - small_full
+      - large_with_section
+      - single_section_filing
+      - not_supported
+      type: string
+      description: '* `small_full` - small_full
+
+        * `large_with_section` - large_with_section
+
+        * `single_section_filing` - single_section_filing
+
+        * `not_supported` - not_supported'
+    DocumentSection:
+      type: object
+      description: A single named section of a document with its character length.
+      properties:
+        name:
+          type: string
+          description: Display name of the section
+        characters:
+          type: integer
+          description: Number of characters in the section
+      required:
+      - characters
+      - name
     BatchSearchRequestSerializerV3Request:
       type: object
       description: 'V3 batch-search request.
@@ -846,6 +868,82 @@ components:
           description: Optional search options
       required:
       - keywords
+    OperatorEnum:
+      enum:
+      - AND
+      - OR
+      type: string
+      description: '* `AND` - AND
+
+        * `OR` - OR'
+    DocumentRetrievalResponse:
+      type: object
+      description: Serializer for document retrieval responses including signed URL.
+      properties:
+        document_id:
+          type: integer
+          description: Unique document identifier
+        signed_url:
+          type: string
+          format: uri
+          description: Signed URL for document access
+        url_expires_at:
+          type: string
+          format: date-time
+          description: URL expiration timestamp
+        file_type:
+          type: string
+          description: Type of the document file
+      required:
+      - document_id
+      - file_type
+      - signed_url
+      - url_expires_at
+    BatchSearchFiltersSerializerV3Request:
+      type: object
+      description: 'V3 batch-search filters.
+
+
+        Same shape as :class:`BatchSearchFiltersSerializer` but without the deprecated
+
+        ``periods`` field (and thus no ``LegacyFieldAliasMixin``). Kept as a standalone
+
+        class so it is trivial to delete once v2 is sunset.'
+      properties:
+        company_ids:
+          type: array
+          items:
+            type: integer
+          description: List of company IDs to filter by
+        document_ids:
+          type: array
+          items:
+            type: integer
+          description: List of document IDs to filter by
+        filing_types:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: List of filing types to filter by (e.g., '10-K', '10-Q')
+        date_range:
+          type: object
+          additionalProperties: {}
+          description: Date range filter with 'start' and 'end' keys (YYYY-MM-DD format)
+        calendar_quarters:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: One or more calendar quarters in YYYYQ# format. Mutually exclusive with `fiscal_quarters`.
+        fiscal_quarters:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: One or more fiscal quarters in YYYYQ# format. Translated to each company's calendar quarters before filtering, so `company_ids` is required. Mutually exclusive with `calendar_quarters`.
     DocumentMetadataResponse:
       type: object
       description: 'Serializer for the GET /api/v2/documents/{id}/metadata response.
@@ -915,136 +1013,38 @@ components:
       - title
       - total_characters
       - total_sections
-    BatchSearchOptionsRequest:
+    LightweightBatchSearchResponse:
       type: object
-      description: Serializer for batch search options.
+      description: Serializer for lightweight batch search responses without positional information.
       properties:
-        size:
+        success:
+          type: boolean
+          description: Whether the search was successful
+        total_hits:
           type: integer
-          maximum: 100
-          minimum: 1
-          default: 10
-          description: Maximum number of documents to return per page (1-100)
+          description: Total number of matching documents (accurate based on fuzzy setting)
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/LightweightDocumentMatch'
+          description: List of matching documents with match_ids for current page
         offset:
           type: integer
-          minimum: 0
-          default: 0
-          description: 'Number of documents to skip for pagination (default: 0)'
-        operator:
-          allOf:
-          - $ref: '#/components/schemas/OperatorEnum'
-          default: OR
-          description: 'Search operator - ''AND'' requires all keywords, ''OR'' requires any keyword
-
-
-            * `AND` - AND
-
-            * `OR` - OR'
-        fuzzy:
-          type: boolean
-          default: false
-          description: 'Enable fuzzy matching (default: False). When False, only exact phrase matches are returned. When True, allows approximate matches but positional information may be unavailable.'
-    BatchSearchFiltersSerializerV3Request:
-      type: object
-      description: 'V3 batch-search filters.
-
-
-        Same shape as :class:`BatchSearchFiltersSerializer` but without the deprecated
-
-        ``periods`` field (and thus no ``LegacyFieldAliasMixin``). Kept as a standalone
-
-        class so it is trivial to delete once v2 is sunset.'
-      properties:
-        company_ids:
-          type: array
-          items:
-            type: integer
-          description: List of company IDs to filter by
-        document_ids:
-          type: array
-          items:
-            type: integer
-          description: List of document IDs to filter by
-        filing_types:
-          type: array
-          items:
-            type: string
-            minLength: 1
-          description: List of filing types to filter by (e.g., '10-K', '10-Q')
-        date_range:
-          type: object
-          additionalProperties: {}
-          description: Date range filter with 'start' and 'end' keys (YYYY-MM-DD format)
-        calendar_quarters:
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 10
-          description: One or more calendar quarters in YYYYQ# format. Mutually exclusive with `fiscal_quarters`.
-        fiscal_quarters:
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 10
-          description: One or more fiscal quarters in YYYYQ# format. Translated to each company's calendar quarters before filtering, so `company_ids` is required. Mutually exclusive with `calendar_quarters`.
-    DocumentRetrievalResponse:
-      type: object
-      description: Serializer for document retrieval responses including signed URL.
-      properties:
-        document_id:
+          description: Current pagination offset
+        limit:
           type: integer
-          description: Unique document identifier
-        signed_url:
-          type: string
-          format: uri
-          description: Signed URL for document access
-        url_expires_at:
-          type: string
-          format: date-time
-          description: URL expiration timestamp
-        file_type:
-          type: string
-          description: Type of the document file
-      required:
-      - document_id
-      - file_type
-      - signed_url
-      - url_expires_at
-    PaginatedDocumentMetadataSerializerV3List:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
+          description: Current page size limit
+        error:
           type:
           - string
           - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocumentMetadataSerializerV3'
-    OperatorEnum:
-      enum:
-      - AND
-      - OR
-      type: string
-      description: '* `AND` - AND
-
-        * `OR` - OR'
+          description: Error message if search failed
+      required:
+      - documents
+      - limit
+      - offset
+      - success
+      - total_hits
   securitySchemes:
     apiKeyAuth:
       type: http

@@ -488,6 +488,68 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    AccessedCompany:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          description: Identifier of the company the user has accessed
+        company_name:
+          type:
+          - string
+          - 'null'
+          description: Name of the company
+        ticker:
+          type:
+          - string
+          - 'null'
+          description: Ticker symbol of the company
+        first_accessed_at:
+          type: string
+          format: date-time
+          description: Timestamp of the first time the user accessed the company
+      required:
+      - company_id
+      - company_name
+      - first_accessed_at
+      - ticker
+    AccessedSeries:
+      type: object
+      properties:
+        series_id:
+          type: integer
+          readOnly: true
+        full_series_name:
+          type: string
+          readOnly: true
+      required:
+      - full_series_name
+      - series_id
+    PaginatedAccessedCompanyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedCompany'
     ConsumptionEvent:
       type: object
       properties:
@@ -515,30 +577,6 @@ components:
       - source
       - timestamp
       - user_identifier
-    SeriesConsumption:
-      type: object
-      properties:
-        company_id:
-          type: integer
-          readOnly: true
-        current_series_per_company_limit:
-          type:
-          - string
-          - 'null'
-          readOnly: true
-        number_of_series_accessed_for_company:
-          type: integer
-          readOnly: true
-        series_accessed:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessedSeries'
-          readOnly: true
-      required:
-      - company_id
-      - current_series_per_company_limit
-      - number_of_series_accessed_for_company
-      - series_accessed
     PaginatedConsumptionEventList:
       type: object
       required:
@@ -564,18 +602,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConsumptionEvent'
-    AccessedSeries:
-      type: object
-      properties:
-        series_id:
-          type: integer
-          readOnly: true
-        full_series_name:
-          type: string
-          readOnly: true
-      required:
-      - full_series_name
-      - series_id
     Consumption:
       type: object
       properties:
@@ -598,79 +624,39 @@ components:
       - final_date
       - initial_date
       - monthly_limit
-    PaginatedAccessedCompanyList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessedCompany'
-    AccessedCompany:
+    SeriesConsumption:
       type: object
       properties:
         company_id:
           type: integer
-          description: Identifier of the company the user has accessed
-        company_name:
+          readOnly: true
+        current_series_per_company_limit:
           type:
           - string
           - 'null'
-          description: Name of the company
-        ticker:
-          type:
-          - string
-          - 'null'
-          description: Ticker symbol of the company
-        first_accessed_at:
-          type: string
-          format: date-time
-          description: Timestamp of the first time the user accessed the company
+          readOnly: true
+        number_of_series_accessed_for_company:
+          type: integer
+          readOnly: true
+        series_accessed:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessedSeries'
+          readOnly: true
       required:
       - company_id
-      - company_name
-      - first_accessed_at
-      - ticker
-    ConsumptionEvent_2:
+      - current_series_per_company_limit
+      - number_of_series_accessed_for_company
+      - series_accessed
+    HTTPValidationError:
       properties:
-        source:
-          type: string
-          title: Source
-        number_of_datapoints:
-          type: integer
-          title: Number Of Datapoints
-        user_identifier:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Identifier
-        timestamp:
-          type: string
-          format: date-time
-          title: Timestamp
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
       type: object
-      required:
-      - source
-      - number_of_datapoints
-      - timestamp
-      title: ConsumptionEvent
+      title: HTTPValidationError
     ConsumptionEventsResponse:
       properties:
         count:
@@ -730,15 +716,29 @@ components:
       - msg
       - type
       title: ValidationError
-    HTTPValidationError:
+    ConsumptionEvent_2:
       properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
+        source:
+          type: string
+          title: Source
+        number_of_datapoints:
+          type: integer
+          title: Number Of Datapoints
+        user_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User Identifier
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
       type: object
-      title: HTTPValidationError
+      required:
+      - source
+      - number_of_datapoints
+      - timestamp
+      title: ConsumptionEvent
   securitySchemes:
     apiKeyAuth:
       type: http

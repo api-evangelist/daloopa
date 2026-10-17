@@ -647,6 +647,62 @@ paths:
           description: ''
 components:
   schemas:
+    PatchedWebhookUpdateRequest:
+      type: object
+      description: 'Validates the payload for updating an existing webhook (PATCH).
+
+
+        All fields are optional, but at least one must be provided.'
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        active:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+    WebhookCreateRequest:
+      type: object
+      description: 'Validates the payload for creating a new webhook.
+
+
+        Required fields: ``url``, ``event_type``, ``is_test``.
+
+        Optional fields: ``header_name``, ``prefix``, ``auth_secret``.'
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        is_test:
+          type: boolean
+        header_name:
+          type: string
+          minLength: 1
+        prefix:
+          type: string
+          minLength: 1
+        auth_secret:
+          type: string
+          minLength: 1
+      required:
+      - event_type
+      - is_test
+      - url
     WebhookFullRead:
       type: object
       description: 'Read-only serializer for webhook responses (list, retrieve, create, update).
@@ -706,62 +762,20 @@ components:
       required:
       - label
       - value
-    WebhookCreateRequest:
-      type: object
-      description: 'Validates the payload for creating a new webhook.
+    EventTypeEnum:
+      enum:
+      - clientview_updated
+      - incremental_update
+      - series_updated
+      - document_added
+      type: string
+      description: '* `clientview_updated` - Clientview Updated
 
+        * `incremental_update` - Incremental Update
 
-        Required fields: ``url``, ``event_type``, ``is_test``.
+        * `series_updated` - Series Updated
 
-        Optional fields: ``header_name``, ``prefix``, ``auth_secret``.'
-      properties:
-        url:
-          type: string
-          format: uri
-          minLength: 1
-        event_type:
-          $ref: '#/components/schemas/EventTypeEnum'
-        is_test:
-          type: boolean
-        header_name:
-          type: string
-          minLength: 1
-        prefix:
-          type: string
-          minLength: 1
-        auth_secret:
-          type: string
-          minLength: 1
-      required:
-      - event_type
-      - is_test
-      - url
-    PatchedWebhookUpdateRequest:
-      type: object
-      description: 'Validates the payload for updating an existing webhook (PATCH).
-
-
-        All fields are optional, but at least one must be provided.'
-      properties:
-        url:
-          type: string
-          format: uri
-          minLength: 1
-        event_type:
-          $ref: '#/components/schemas/EventTypeEnum'
-        is_test:
-          type: boolean
-        active:
-          type: boolean
-        header_name:
-          type: string
-          minLength: 1
-        prefix:
-          type: string
-          minLength: 1
-        auth_secret:
-          type: string
-          minLength: 1
+        * `document_added` - Document Added'
     PaginatedWebhookFullReadList:
       type: object
       required:
@@ -787,20 +801,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WebhookFullRead'
-    EventTypeEnum:
-      enum:
-      - clientview_updated
-      - incremental_update
-      - series_updated
-      - document_added
-      type: string
-      description: '* `clientview_updated` - Clientview Updated
-
-        * `incremental_update` - Incremental Update
-
-        * `series_updated` - Series Updated
-
-        * `document_added` - Document Added'
   securitySchemes:
     apiKeyAuth:
       type: http
