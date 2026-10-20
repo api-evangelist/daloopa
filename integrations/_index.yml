@@ -48,3 +48,29 @@
     detected: '2026-10-20'
   status: not-a-workflow
   arazzo: null
+- slug: daloopa-databricks-marketplace
+  label: Databricks Marketplace
+  partner: databricks
+  partner_name: Databricks Marketplace
+  category: data product listing
+  type: marketplace
+  marketplace: databricks-marketplace
+  channel: distribution
+  evidence: https://marketplace.databricks.com/provider/67b92f07-25a5-4783-91fc-b2cb325ac5ed
+  source: edge
+  relationship: distribution-channel
+  contract_reference:
+    register: Databricks Marketplace (marketplace.databricks.com/api/2.0/public-marketplace-providers + public-marketplace-listings)
+    spec_file: null
+    role: data-marketplace-seller
+    registered_name: Daloopa
+    matched_domain: daloopa.com
+    matched_by: domain
+    listings: 1
+    sample_listings:
+    - Daloopa Fundamental Data
+    signal_note: 'participation: the provider lists data products on this marketplace; counts are context'
+    detected_by: sweep-data-marketplaces.py
+    detected: '2026-10-20'
+  status: not-a-workflow
+  arazzo: null
