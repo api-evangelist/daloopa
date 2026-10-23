@@ -708,3 +708,9 @@ components:
       type: http
       scheme: basic
       description: 'Basic authentication with base64-encoded credentials. Format: "Basic base64(email:apiKey)"'
+x-provenance:
+  method: harvested
+  publisher: Daloopa
+  source: https://app.daloopa.com/swagger.json
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
